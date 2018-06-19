@@ -19,6 +19,7 @@ kHome = pathlib.Path.home()
 # kPackageDir = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 kPackageDir = kHome / '.config' / 'mongodb-cmdline-tool'
 
+
 def get_jira():
     global jira_cli
     if not jira_cli:
@@ -33,8 +34,6 @@ def get_jira():
             if e.status_code == '403' or e.status_code == 403:
                 print('CAPTCHA required, please log out and log back into Jira')
                 return None
-        except:
-            print('Failed to connect to Jira')
 
     print_bold('Updating ticket in Jira. Please wait...')
     return jira_cli
@@ -129,12 +128,12 @@ def new(c, ticket_number, branch='master', project='server'):
         if jirac:
             issue = jirac.issue(f'{project.upper()}-{ticket_number}')
             if issue.fields.status.id == '1':  # '1' = Open
-                print_bold(
-                    f'Transitioning {project.upper()}-{ticket_number} in Jira to "In Progress"')
+                print_bold(f'Transitioning {project.upper()}-{ticket_number} '
+                           f'in Jira to "In Progress"')
                 jirac.transition_issue(issue, '4')  # '4' = Start Progress
             else:
-                print_bold(
-                    f'{project.upper()}-{ticket_number} in Jira is not in "Open" status, not updating Jira')
+                print_bold(f'{project.upper()}-{ticket_number} in Jira is not '
+                           f'in "Open" status, not updating Jira')
 
     cache = _load_cache(c)
     if ticket_number not in cache:
@@ -171,7 +170,8 @@ def lint(c, eslint=False):
 @task(aliases='c')
 def commit(c):
     """
-    Step 4: Wrapper around git commit to automatically add changes and fill in the ticket number in the commit message.
+    Step 4: Wrapper around git commit to automatically add changes and fill in the ticket number
+    in the commit message.
     """
     init(c)
 
@@ -201,13 +201,14 @@ def review(c, new_cr=False, browser=True):
     """
     Step 5: Put your code up for code review.
 
-    :param new_cr: whether to create a new code review. Use it if you have multiple CRs for the same ticket. (Default: False)
-    :param no_browser: Set it if you're running this script in a ssh terminal.
+    :param new_cr: whether to create a new code review. Use it if you have multiple CRs for the
+                   same ticket. (Default: False)
+    :param browser: Set it to False if you're running this script in a ssh terminal.
     """
     init(c)
     commit_num, branch_num = _get_ticket_numbers(c)
     if commit_num != branch_num:
-        print( '[ERROR] Please commit your local changes before submitting them for review.')
+        print('[ERROR] Please commit your local changes before submitting them for review.')
         sys.exit(1)
 
     cache = _load_cache(c)
@@ -247,7 +248,8 @@ def review(c, new_cr=False, browser=True):
 
             # Transition Ticket
             if ticket.fields.status.id == '3':  # '3' = In Progress.
-                print_bold(f'Transitioning {project.upper()}-{branch_num} in Jira to "Start Code Review"')
+                print_bold(
+                    f'Transitioning {project.upper()}-{branch_num} in Jira to "Start Code Review"')
                 jirac.transition_issue(ticket, '761')  # '4' = Start Code Review
 
                 # Add comment.
@@ -257,8 +259,8 @@ def review(c, new_cr=False, browser=True):
                     visibility={'type': 'role', 'value': 'Developers'}
                 )
             else:
-                print_bold(
-                    f'SERVER-{branch_num} in Jira is not in "In Progress" status, not updating Jira')
+                print_bold(f'SERVER-{branch_num} in Jira is not in '
+                           f'"In Progress" status, not updating Jira')
         else:
             print_bold(f'Please manually add a link of your codereview to: '
                        f'https://jira.mongodb.org/browse/{project.upper()}-{commit_num}')
@@ -282,7 +284,8 @@ def patch(c, branch='master', finalize=False):
     Step 6: Run patch build in Evergreen.
 
 
-    :param finalize: whether to finalize the patch build and have it run immediately. (Default: False)
+    :param finalize: whether to finalize the patch build and have it run immediately.
+                     (Default: False)
     :param branch: the base branch for the patch build. (Default: False)
     """
     init(c)
@@ -319,7 +322,7 @@ def patch(c, branch='master', finalize=False):
 
 
 @task(aliases='f', optional=['push', 'branch'])
-def finalize(c, push=False, branch='master'):
+def finish(c, push=False, branch='master'):
     """
     Step 7: Finalize your changes. Merge them with the base branch and optionally push upstream.
 
@@ -339,7 +342,8 @@ def finalize(c, push=False, branch='master'):
 
     res = c.run(f'git rebase {branch}', warn=True)
     if res.return_code != 0:
-        print(f'[ERROR] Did not rebase cleanly onto {branch}, please manually run: git rebase {branch}')
+        print(f'[ERROR] Did not rebase cleanly onto {branch}, '
+              f'please manually run: git rebase {branch}')
         c.run(f'git checkout {feature_branch}')
         sys.exit(1)
     c.run(f'git checkout {branch}')
@@ -365,21 +369,20 @@ def finalize(c, push=False, branch='master'):
 
         c.run(f'git branch -d {feature_branch}')
 
-        # TODO: Update Jira and close CR.
-        # jirac = get_jira()
-        # if jirac:
-        #     ticket = get_jira().issue(f'SERVER-{branch_num}')
-        #
-        #     # Transition Ticket
-        #     if ticket.fields.status.id == '10018':  # '10018' = In Code Review.
-        #         print_bold(f'Transitioning SERVER-{branch_num} in Jira to "Closed"')
-        #         jirac.transition_issue(ticket, '981')  # '981' = Close Issue
-        #     else:
-        #         print_bold(
-        #             f'SERVER-{branch_num} in Jira is not in "In Code Review" status, not updating Jira')
-        # else:
-        #     print_bold(f'Please manually add a link of your codereview to: '
-        #                f'https://jira.mongodb.org/browse/SERVER-{commit_num}')
+        jirac = get_jira()
+        if jirac:
+            ticket = get_jira().issue(f'{project}-{branch_num}')
+
+            # Transition Ticket
+            if ticket.fields.status.id == '10018':  # '10018' = In Code Review.
+                print_bold(f'Transitioning {project}-{branch_num} in Jira to "Closed"')
+                jirac.transition_issue(ticket, '981')  # '981' = Close Issue
+            else:
+                print_bold(f'{project}-{branch_num} in Jira is not in '
+                           f'"In Code Review" status, not updating Jira')
+        else:
+            print_bold(f'Please manually add a link of your code review to: '
+                       f'https://jira.mongodb.org/browse/{project}-{commit_num}')
 
     print_bold(
         'Please remember to close this issue and add a comment of your patch build link '

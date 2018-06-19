@@ -1,5 +1,4 @@
 import getpass
-import keyring
 import os
 import pathlib
 import re
@@ -27,25 +26,26 @@ kSuccess = 0
 env_editor = None
 
 # Toolchain constants.
-kToolchainURL = 'https://s3.amazonaws.com/mciuploads/toolchain-builder/osx/23e02cf782ce2069598f5b8a3029cd13daf6db1c/toolchain_builder_osx_23e02cf782ce2069598f5b8a3029cd13daf6db1c_18_06_05_16_54_20.tar.gz'
+kToolchainURL = ('https://s3.amazonaws.com/mciuploads/toolchain-builder/osx/'
+                 '23e02cf782ce2069598f5b8a3029cd13daf6db1c/toolchain_builder_'
+                 'osx_23e02cf782ce2069598f5b8a3029cd13daf6db1c_18_06_05_16_54_20.tar.gz')
 
 # Evergreen constants
 kEvgToolURL = 'https://evergreen.mongodb.com/clients/darwin_amd64/evergreen'
 kEvgConfigPath = pathlib.Path.home() / '.evergreen.yml'
 
 # GitHub constants
-kGitHubAddSSHHelpURL = 'https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac'
+kGitHubAddSSHHelpURL = ('https://help.github.com/articles/'
+                        'generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac')
 kRepositoryURLs = {
     'mongo': 'git@github.com:mongodb/mongo.git',
     'kernel-tools': 'git@github.com:10gen/kernel-tools.git'
 }
-
-
-
 # Runtime configuration
 jira_username = None
 jira_password = None
 sudo_password = None
+
 
 @task
 def get_passwords(c):
@@ -54,7 +54,7 @@ def get_passwords(c):
 
     if not get_jira_pwd():
         jira_password = getpass.getpass(prompt='jira.mongodb.org password: ')
-        save_jira_pwd(c, jira_password)
+        save_jira_pwd(jira_password)
 
     jira_password = get_jira_pwd()
     sudo_password = getpass.getpass(prompt='Your sudo password: ')
@@ -70,12 +70,13 @@ def macos(c):
     git credentials: https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
     git checkout optionally enterprise module repos,
     ssh keys
-    evergreen credentials (requires manual copy and paste from browser https://evergreen.mongodb.com/settings),
+    evergreen credentials (requires manual copy and paste from browser
+        https://evergreen.mongodb.com/settings),
         also turn on email/Slack alerts for patch builds
     evergreen default build variants and tasks, tasks vary by team
 
     """
-    get_passwords(c)
+    get_passwords()
 
     print_bold('Checking sudo password is correct')
     c.sudo('ls', warn=False, hide='both', password=sudo_password)
@@ -106,22 +107,20 @@ def macos(c):
     print_bold('Setting Evergreen Configuration')
     _set_evergreen_config(c)
 
-    # TODO: remove this step when the toolchain Python works.
-    print_bold('Installing python')
-    c.run('brew install --upgrade python3 python2', hide='both') # Ignore errors
-    c.run('pip3 install --upgrade pip setuptools', warn=False, hide='both')
-    c.run('pip2 install --upgrade pip setuptools', warn=False, hide='both')
     with c.cd(f'{kHome / "mongo"}'):
-        c.run('pip3 install -r buildscripts/requirements.txt') # Ignore permission errors.
-        c.run('pip2 install -r buildscripts/requirements.txt') # Ignore permission errors.
+        c.run('pip3 install -r buildscripts/requirements.txt')  # Ignore permission errors.
+        c.run('pip2 install -r buildscripts/requirements.txt')  # Ignore permission errors.
         c.run('pip2 install regex', warn=False)
 
     print_bold('Installing MongoDB Toolchain')
     _install_binary(c, kToolchainURL, f'toolchain.tar.gz', 'mongodbtoolchain', kOptDir, untar=True)
 
     print_bold('Installing Evergreen Command Line Tool')
-    _install_binary(c, kEvgToolURL, 'evergreen', 'evergreen', pathlib.Path.home() / 'bin', untar=False)
-    c.run(f'chmod +x {pathlib.Path.home() / "bin" / "evergreen"}')  # Work around 'evergreen' not executable by default.
+    _install_binary(c, kEvgToolURL, 'evergreen', 'evergreen', pathlib.Path.home() / 'bin',
+                    untar=False)
+
+    # Work around 'evergreen' not executable by default.
+    c.run(f'chmod +x {pathlib.Path.home() / "bin" / "evergreen"}')
 
     print_bold('Setting configurations and environment variables.')
     _set_env_vars(c)
@@ -129,10 +128,9 @@ def macos(c):
 
 @task
 def _set_env_vars(c):
-    # TODO: add toolchain path when the toolchain Python works.
     with open('profile', 'w') as f:
         lines = [
-            f'export PATH=$HOME/bin:$PATH'
+            f'export PATH=/opt/mongodbtoolchain/v2/bin:$HOME/bin:$PATH'
         ]
 
         if env_editor:
@@ -187,10 +185,11 @@ def _create_ssh_keys(c):
         return
 
     res = input(format_bold('Opening browser for instructions to setting up ssh keys in GitHub, '
-                                'press any key to continue, enter "skip" to skip: '))
+                            'press any key to continue, enter "skip" to skip: '))
     if res != 'skip':
         webbrowser.open(kGitHubAddSSHHelpURL)
-        input(format_bold('Once you\'ve generated SSH keys and added them to GitHub, press any key to continue'))
+        input(format_bold(
+            'Once you\'ve generated SSH keys and added them to GitHub, press any key to continue'))
     else:
         print('Skipping adding SSH Keys to GitHub')
 
@@ -222,7 +221,9 @@ def _install_editor(c):
     while True:
         default_editor = 'nano'
         editor = input('Which text editor do you use? '
-                       '(e.g. vim/emacs/neovim/sublime-text/visual-studio-code. Default: nano): ') or default_editor
+                       '(e.g. vim/emacs/neovim/sublime-text/visual-studio-code. Default: nano): ')
+        if not editor:
+            editor = default_editor
 
         # Hide stdout and stderr by default because editor may be a cask.
         res = c.run(f'brew install --upgrade {editor}', hide='both')
@@ -231,15 +232,16 @@ def _install_editor(c):
             if res_cask.return_code is not kSuccess:
                 print(res)
                 print(res_cask)
-                print(f'\'{editor}\' not found; please find the name of the HomeBrew formula for {editor}')
+                print((f'\'{editor}\' not found; please find the '
+                       f'name of the HomeBrew formula for {editor}'))
                 continue
             stdout = res_cask.stdout
             match = re.search(r'Linking Binary \'(\w+)\'', stdout)
             if match:
                 env_editor = match.group(1)
             else:
-                print(
-                    f'WARNING: {editor} does not have a command line invocation, using \'{default_editor}\' as $EDITOR')
+                print((f'WARNING: {editor} does not have a command line invocation, '
+                       f'using \'{default_editor}\' as $EDITOR'))
                 env_editor = 'nano'
 
         else:
@@ -258,8 +260,10 @@ def _install_binary(c, url, download_name, binary_name, parent_dir, untar=False)
 
     c.sudo(f'mkdir -p {parent_dir}', warn=False, password=sudo_password)
     c.sudo(f'rm -rf {parent_dir / binary_name}', warn=False, password=sudo_password)
-    c.sudo(f'mv -f {kDownloadsCache / binary_name} {parent_dir / binary_name}', warn=False, password=sudo_password)
-    c.sudo(f'chown -R {getpass.getuser()} {parent_dir / binary_name}', warn=False, password=sudo_password)
+    c.sudo(f'mv -f {kDownloadsCache / binary_name} {parent_dir / binary_name}', warn=False,
+           password=sudo_password)
+    c.sudo(f'chown -R {getpass.getuser()} {parent_dir / binary_name}', warn=False,
+           password=sudo_password)
     print(f'Installed {binary_name} to {parent_dir}')
 
 
@@ -301,5 +305,3 @@ def macos_extra(c):
     c.run('brew cask install clion', warn=True)
     with c.cd(kPackageDir):
         c.run('cp mongo-cmakelists.txt ~/mongo/CMakeLists.txt')
-
-

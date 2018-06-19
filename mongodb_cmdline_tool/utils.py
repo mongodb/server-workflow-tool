@@ -1,9 +1,8 @@
-import os
 import pathlib
 import sys
 
 import keyring
-import yaml
+
 
 config_path = pathlib.Path.home() / '.config' / 'mongodb-cmdline-tool' / 'config'
 
@@ -23,5 +22,5 @@ def get_jira_pwd():
     return keyring.get_password('jira', 'dummy_user')
 
 
-def save_jira_pwd(c, pwd):
+def save_jira_pwd(pwd):
     keyring.set_password('jira', 'dummy_user', pwd)
