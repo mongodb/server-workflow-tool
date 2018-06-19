@@ -17,7 +17,7 @@ jira_cli = None
 kHome = pathlib.Path.home()
 
 # kPackageDir = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
-kPackageDir = kHome / '.config' / 'mongodb-cmdline-tool'
+kPackageDir = kHome / '.config' / 'server-workflow-tool'
 
 
 def get_jira():

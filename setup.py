@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="mongodb_cmdline_tool",
-    version="1.0.0-alpha2",
+    version="20180619-1",
     author="Robert Guo",
     author_email="rob@mongodb.com",
     description="MongoDB Server Team Command Line Tool",
