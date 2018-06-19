@@ -1,4 +1,5 @@
 import getpass
+import keyring
 import os
 import pathlib
 import re
@@ -9,7 +10,7 @@ import yaml
 from invoke import task
 from invoke.exceptions import Exit, UnexpectedExit
 
-from mongodb_cmdline_tool.utils import print_bold, format_bold, clear_screen, get_jira_pwd, save_jira_pwd
+from mongodb_cmdline_tool.utils import print_bold, format_bold, get_jira_pwd, save_jira_pwd
 
 # Global Constants.
 kHome = pathlib.Path.home()
@@ -26,8 +27,7 @@ kSuccess = 0
 env_editor = None
 
 # Toolchain constants.
-kToolchainURL = 'https://s3.amazonaws.com/mciuploads/toolchain-builder/osx/f8033c8bd540e5fd904713746442547105649b30' \
-                '/toolchain_builder_osx_f8033c8bd540e5fd904713746442547105649b30_18_06_01_18_46_58.tar.gz'
+kToolchainURL = 'https://s3.amazonaws.com/mciuploads/toolchain-builder/osx/23e02cf782ce2069598f5b8a3029cd13daf6db1c/toolchain_builder_osx_23e02cf782ce2069598f5b8a3029cd13daf6db1c_18_06_05_16_54_20.tar.gz'
 
 # Evergreen constants
 kEvgToolURL = 'https://evergreen.mongodb.com/clients/darwin_amd64/evergreen'
@@ -53,16 +53,11 @@ def get_passwords(c):
     global sudo_password
 
     if not get_jira_pwd():
-        while True:
-            jira_password = getpass.getpass(prompt='jira.mongodb.org password: ')
-            print(f'Jira Password: {jira_password}')
-            confirmation = input('Is this information correct? (Y/n)')
-            clear_screen()
-            if confirmation != 'n':
-                save_jira_pwd(c, jira_password)
-                break
+        jira_password = getpass.getpass(prompt='jira.mongodb.org password: ')
+        save_jira_pwd(c, jira_password)
+
     jira_password = get_jira_pwd()
-    sudo_password = getpass.getpass(prompt='[sudo] password: ')
+    sudo_password = getpass.getpass(prompt='Your sudo password: ')
 
 
 @task

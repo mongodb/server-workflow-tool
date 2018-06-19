@@ -52,6 +52,7 @@ def init(c):
         evg_config = yaml.load(evg_file)
         jira_username = evg_config['user']
     jira_password = get_jira_pwd()
+    print(jira_password)
 
 
 def _strip_proj(ticket_number):
