@@ -1,0 +1,3 @@
+#!/bin/bash
+# Installed as a pre-push hook, prevents accidentally pushing with uncommitted changes.
+[[ -z "$(git status --porcelain)" ]]

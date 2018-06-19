@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Repository information
+origin="`git config remote.origin.url`"
+repo="`basename $origin`"
+tld="`git rev-parse --show-toplevel`"
+branch="`git rev-parse --abbrev-ref HEAD`"
+
+# Run clang_format.py on supported branches
+case $branch in
+    v3*|master) python $tld/buildscripts/clang_format.py lint ;;
+    *) exit 0 ;;
+esac
+exit $?

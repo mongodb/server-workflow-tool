@@ -1,0 +1,13 @@
+#!/bin/bash
+# Don't push if it would break compile.
+set -e
+
+if command -v ninja >/dev/null 2>&1; then
+    ninja core
+else
+    if [ -z "$SCONSFLAGS" ]; then
+        echo >&2 "Warning: Specify a -j flag in the SCONSFLAGS environment variable" \
+                 "for faster compiles"
+    fi
+    python2 buildscripts/scons.py core
+fi

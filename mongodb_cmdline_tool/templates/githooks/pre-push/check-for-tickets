@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# Look for commits that have no tickets or reference tickets in private
+# projects
+
+# FIXME: expand to warn when pushing to closed tickets?? Or use a separate
+# hook?
+
+remote="$1"
+url="$2"
+
+z40=0000000000000000000000000000000000000000
+
+warnings=0
+errors=0
+
+while read local_ref local_sha remote_ref remote_sha
+do
+    # Handle tags
+    case $local_ref in
+        refs/tags*) continue
+    esac
+
+	if [ "$local_sha" == $z40 ]; then
+        # Handle delete
+        continue
+	fi
+
+	if [ "$remote_sha" == $z40 ]; then
+		# New branch, examine all commits
+		range="$local_sha"
+	else
+        if ! git cat-file -e "$remote_sha"; then
+			# If the remote SHA doesn't exist, this repository is stale and the push will fail
+			# later. In that case, this hook cannot find the base revision and so cannot check the
+			# new commits.
+            continue
+        fi
+		# Update to existing branch, examine new commits
+		range="$remote_sha..$local_sha"
+	fi
+
+    # Add repo-specific checks below
+    # ==================================================================
+
+	# - Check that all commits have tickets
+	commits="`git rev-list "$range"`"
+    for c in $commits ; do
+        subject="`git log -1 --format="%s" $c`"
+
+        # Allow "Fix lint" as the sole commit summary
+        if [ "$subject" == "Fix lint" ]; then
+            continue
+        fi
+
+        if (echo "$subject" | egrep -q '^(Revert)?(EVG|SERVER|WT)-[0-9]+'); then
+            # These are public tickets
+            continue
+        elif (echo "$subject" | egrep -q '^[A-Z]+-[0-9]+') ; then
+            # Do not allow references to private tickets
+            echo
+            echo "ERROR: found a reference to a private project"
+            echo "$c $subject"
+            errors=$((errors+1))
+        else
+            # Allow commits without tickets for now
+            echo
+            echo "WARNING: found a commit without a ticket"
+            echo "$c $subject"
+            warnings=$((warnings+1))
+        fi
+    done
+done
+
+# Do not allow pushing if errors are found
+if [ $errors -gt 0 ]; then
+    exit 1
+fi
+
+# Allow users to push when there are just warnings
+if [ $warnings -gt 0 ]; then
+    if [ "$IGNORE_WARNINGS" == "yes" ]; then
+        echo "WARNING: force-pushing after finding some warnings ${branch}..."
+        exit 0
+    else
+        echo
+        echo "Fix the warnings above and try again, or run:"
+        echo
+        echo "  IGNORE_WARNINGS=yes git push"
+        echo
+        echo "to push anyway"
+        echo
+        exit 1
+    fi
+fi
+
+exit 0
