@@ -16,9 +16,8 @@ jira_cli = None
 
 kHome = pathlib.Path.home()
 
-# kPackageDir = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 kPackageDir = kHome / '.config' / 'server-workflow-tool'
-
+kScriptDir = kPackageDir / 'scripts'
 
 def get_jira():
     global jira_cli
@@ -219,7 +218,7 @@ def review(c, new_cr=False, browser=True):
 
     commit_msg = c.run('git log --oneline -1 --pretty=%s', hide=True).stdout.strip()
 
-    cmd = f'python2 {kPackageDir / "upload.py"} --rev HEAD~1 --nojira -y '
+    cmd = f'python2 {kScriptDir / "upload.py"} --rev HEAD~1 --nojira -y '
 
     if project == 'server':
         cmd += '--git_similarity 90 --check-clang-format --check-eslint'
