@@ -141,6 +141,18 @@ def new(c, ticket_number, branch='master', project='server'):
     _store_cache(c, cache)
 
 
+@task(aliases='m', optional=['pull'])
+def checkout_master(c, pull=False):
+    """
+    Checkout the master branch. Wrapper around "git checkout master"
+
+    :param pull: fetch and rebase onto latest master on remote.
+    """
+    with c.cd(str(kHome / 'mongo')):
+        c.run('git fetch origin master')
+        c.run('git rebase origin/master')
+
+
 @task(aliases='s')
 def scons(c):
     """
@@ -236,36 +248,37 @@ def review(c, new_cr=False, browser=True):
     res = c.run(cmd, hide='stdout')
 
     match = re.search('Issue created. URL: (.*)', res.stdout)
-    if match:
-        url = match.group(1)
-        issue_number = url.split('/')[-1]
+    if not match:
+        print_bold(f'Please manually add a link of your codereview to: '
+                   f'https://jira.mongodb.org/browse/{project.upper()}-{commit_num}')
+        sys.exit(1)
 
-        jirac = get_jira()
-        if jirac:
-            ticket = get_jira().issue(f'{project.upper()}-{commit_num}')
-
-            # Transition Ticket
-            if ticket.fields.status.id == '3':  # '3' = In Progress.
-                print_bold(
-                    f'Transitioning {project.upper()}-{branch_num} in Jira to "Start Code Review"')
-                jirac.transition_issue(ticket, '761')  # '4' = Start Code Review
-
-                # Add comment.
-                get_jira().add_comment(
-                    ticket,
-                    f'CR: {url}',
-                    visibility={'type': 'role', 'value': 'Developers'}
-                )
-            else:
-                print_bold(f'SERVER-{branch_num} in Jira is not in '
-                           f'"In Progress" status, not updating Jira')
-        else:
-            print_bold(f'Please manually add a link of your codereview to: '
-                       f'https://jira.mongodb.org/browse/{project.upper()}-{commit_num}')
+    url = match.group(1)
+    issue_number = url.split('/')[-1]
 
     if not issue_number:
-        print('[ERROR] Something went wrong, no CR issue number was found')
+        print('[ERROR] Something went wrong, no CR issue number was found in code review URL')
         sys.exit(1)
+
+    jirac = get_jira()
+    if jirac:
+        ticket = get_jira().issue(f'{project.upper()}-{commit_num}')
+
+        # Transition Ticket
+        if ticket.fields.status.id == '3':  # '3' = In Progress.
+            print_bold(
+                f'Transitioning {project.upper()}-{branch_num} in Jira to "Start Code Review"')
+            jirac.transition_issue(ticket, '761')  # '4' = Start Code Review
+
+            # Add comment.
+            get_jira().add_comment(
+                ticket,
+                f'CR: {url}',
+                visibility={'type': 'role', 'value': 'Developers'}
+            )
+        else:
+            print_bold(f'SERVER-{branch_num} in Jira is not in '
+                        f'"In Progress" status, not updating Jira')
 
     cache[commit_num]['cr'] = issue_number
 
@@ -401,7 +414,7 @@ def self_update(c):
         c.run('git rebase', warn=False, hide='both')
 
         # Ignore failures if we can't install or upgrade with pip3.
-        c.run('pip3 install --upgrade .', warn=True)
+        c.run('pip3 install --upgrade .', warn=True, hide=True)
         _post_update_steps(c)
 
 
