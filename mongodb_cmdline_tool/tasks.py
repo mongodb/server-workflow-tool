@@ -198,7 +198,7 @@ def commit(c):
         c.run('git add jstests/')
 
     if commit_num == branch_num:
-        c.run('git commit --amend --no-edit')
+        c.run('git commit --amend --no-edit --reset-author')
     else:
         raw_commit_msg = input('Please enter the commit message (without ticket number): ')
         c.run(f'git commit -m "{project.upper()}-{branch_num} {raw_commit_msg}"')
