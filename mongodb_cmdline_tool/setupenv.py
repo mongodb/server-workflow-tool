@@ -76,7 +76,7 @@ def macos(c):
     evergreen default build variants and tasks, tasks vary by team
 
     """
-    get_passwords()
+    get_passwords(c)
 
     print_bold('Checking sudo password is correct')
     c.sudo('ls', warn=False, hide='both', password=sudo_password)
