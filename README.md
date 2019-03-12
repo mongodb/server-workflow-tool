@@ -2,13 +2,47 @@
 
 Command line tool to help MongoDB server engineers set up dev environment and automate everyday workflow.
 
-## Installation:
+## Installation
+```
+# These are the installation steps for a brand new macOS machine. Copy and paste each line here individually.
+
+# Install homebrew
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+# Download python3 and pip3
+brew install --upgrade python3
+pip3 install --upgrade pip setuptools
+
+# Clone the workflow tool and install its dependencies.
+mkdir -p ~/.config
+cd ~/.config
+rm -rf server-workflow-tool
+git clone https://github.com/mongodb/server-workflow-tool
+cd server-workflow-tool
+pip3 install .
+
+# Create additional files needed by various configurations.
+touch ~/.evergreen.yml
+
+# Add the workflow tool to PATH.
+echo "source ~/.config/server-workflow-tool/profile" >> ~/.profile
+echo "source ~/.profile" >> ~/.bashrc
+echo "source ~/.profile" >> ~/.zshrc
+
+# Run install script.
+m -w setup-dev-env.macos
+```
+
+
+## Re-Installation:
 ```
 git clone https://github.com/mongodb/server-workflow-tool.git ~/.config/server-workflow-tool
 cd ~/.config/server-workflow-tool
 pip3 install .
 echo "source ~/.config/server-workflow-tool/profile" >> ~/.profile
 ```
+
+
 
 ## Usage:
 ```
