@@ -4,9 +4,10 @@ Command line tool to help MongoDB server engineers set up dev environment and au
 
 ## Installation:
 ```
-git clone https://github.com/mongodb/server-workflow-tool.git ~/.config/
+git clone https://github.com/mongodb/server-workflow-tool.git ~/.config/server-workflow-tool
 cd ~/.config/server-workflow-tool
 pip3 install .
+echo "source ~/.config/server-workflow-tool/profile" >> ~/.profile
 ```
 
 ## Usage:
