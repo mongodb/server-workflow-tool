@@ -109,8 +109,8 @@ def macos(c):
 
     with c.cd(f'{kHome / "mongo"}'):
         c.run('pip3 install -r buildscripts/requirements.txt')  # Ignore permission errors.
-        c.run('pip2 install -r buildscripts/requirements.txt')  # Ignore permission errors.
-        c.run('pip2 install regex', warn=False)
+        c.run('python2 -m pip install -r buildscripts/requirements.txt')  # Ignore permission errors.
+        c.run('python2 -m pip install regex', warn=False)
 
     print_bold('Installing MongoDB Toolchain')
     _install_binary(c, kToolchainURL, f'toolchain.tar.gz', 'mongodbtoolchain', kOptDir, untar=True)
