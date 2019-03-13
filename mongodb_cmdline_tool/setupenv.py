@@ -303,5 +303,5 @@ def macos_extra(c):
 
     # Ignore errors since CLion already exists.
     c.run('brew cask install clion', warn=True)
-    with c.cd(kPackageDir):
+    with c.cd(str(kPackageDir)):
         c.run('cp mongo-cmakelists.txt ~/mongo/CMakeLists.txt')
