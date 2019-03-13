@@ -226,7 +226,7 @@ def _install_editor(c):
             editor = default_editor
 
         # Hide stdout and stderr by default because editor may be a cask.
-        res = c.run(f'brew install --upgrade {editor}', hide='both')
+        res = c.run(f'brew install {editor}', hide='both')
         if res.return_code is not kSuccess:
             res_cask = c.run(f'brew cask reinstall {editor}', hide='both')
             if res_cask.return_code is not kSuccess:
@@ -284,7 +284,7 @@ def macos_extra(c):
     :return:
     """
     print_bold('Installing ninja')
-    c.run('brew install --upgrade ninja')
+    c.run('brew install ninja')
 
     modules_dir = str(kHome / 'mongo' / 'src' / 'mongo' / 'db' / 'modules')
     c.run(f'mkdir -p {modules_dir}')
