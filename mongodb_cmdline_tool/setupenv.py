@@ -293,7 +293,7 @@ def macos_extra(c):
         # Ignore errors since ninja may already exist.
         c.run('git clone https://github.com/RedBeard0531/mongo_module_ninja ninja', warn=True)
     with c.cd(str(kHome / 'mongo')):
-        ninja_cmd = 'python buildscripts/scons.py CC=clang CXX=clang++ '
+        ninja_cmd = 'python2 buildscripts/scons.py CC=clang CXX=clang++ '
         ninja_cmd += 'CCFLAGS=-Wa,--compress-debug-sections '
         ninja_cmd += 'MONGO_VERSION=\'0.0.0\' MONGO_GIT_HASH=\'unknown\' '
         ninja_cmd += 'VARIANT_DIR=ninja --modules=ninja build.ninja'
