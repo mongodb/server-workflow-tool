@@ -160,6 +160,7 @@ def scons(c):
     """
     init(c)
     num_cpus = os.cpu_count()
+    print_bold("got here")
     c.run(f'ninja core -j{num_cpus}', pty=True)
 
 
