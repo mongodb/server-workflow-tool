@@ -320,7 +320,7 @@ def patch(c, branch='master', finalize=False):
             c.run('git rebase --abort')
             sys.exit(1)
         else:
-            cmd = f'evergreen patch -y -d "{commit_msg}"'
+            cmd = f'evergreen patch mongodb-mongo-master -y -d "{commit_msg}"'
             if finalize:
                 cmd += ' -f'
             c.run(cmd)
