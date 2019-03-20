@@ -2781,7 +2781,7 @@ def CheckClangFormat(data, location, script):
             temp_file.write(data)
             temp_file.flush()
 
-            cmd = ['python', script, 'lint-patch']
+            cmd = ['python2', script, 'lint-patch']
             if location:
                 cmd.append('--clang-format=' + location)
             cmd.append(temp_file.name)
@@ -2825,7 +2825,7 @@ def CheckESLint(data, location, script):
             temp_file.write(data)
             temp_file.flush()
 
-            cmd = ['python', script, 'lint-patch']
+            cmd = ['python2', script, 'lint-patch']
             if location:
                 cmd.append('--eslint=' + location)
             cmd.append(temp_file.name)
