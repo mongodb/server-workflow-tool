@@ -1,12 +1,6 @@
 projects:
 - name: mongodb-mongo-master
   default: true
-  variants:
-  - enterprise-windows-64-2k8
-  - enterprise-rhel-62-64-bit
-  - enterprise-ubuntu-dynamic-1604-clang-3.8-libcxx
-  - ubuntu1604-debug-aubsan-lite
-  - linux-64-debug
-  - enterprise-rhel-62-64-bit-required-mobile
+  alias: required
   tasks:
   - all
