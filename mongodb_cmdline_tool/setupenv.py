@@ -17,6 +17,7 @@ kOptDir = pathlib.Path('/opt')
 kDownloadsCache = pathlib.Path(tempfile.mkdtemp())
 kPackageDir = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 kConfigDir = kHome / '.config'
+kTemplatesDir = kConfigDir / 'server-workflow-tool' / 'mongodb_cmdline_tool' / 'templates'
 
 # Exit code.
 kCommandNotFound = 127
@@ -128,7 +129,7 @@ def macos(c):
 
 @task
 def _set_env_vars(c):
-    with open('profile', 'w') as f:
+    with open(str(kHome / '.profile'), 'w') as f:
         lines = [
             f'export PATH=/opt/mongodbtoolchain/v2/bin:$HOME/bin:$PATH'
         ]
@@ -138,7 +139,7 @@ def _set_env_vars(c):
 
         f.write('\n'.join(lines))
 
-    with open('default-evergreen-config.yml') as f:
+    with open(str(kTemplatesDir / 'default-evergreen-config.yml')) as f:
         conf = f.read()
 
     with open(str(kHome / '.evergreen.yml'), 'a') as f:
@@ -303,5 +304,5 @@ def macos_extra(c):
 
     # Ignore errors since CLion already exists.
     c.run('brew cask install clion', warn=True)
-    with c.cd(str(kConfigDir / 'server-workflow-tool' / 'mongodb_cmdline_tool' / 'templates')):
+    with c.cd(str(kTemplatesDir)):
         c.run('cp mongo-cmakelists.txt ~/mongo/CMakeLists.txt')
