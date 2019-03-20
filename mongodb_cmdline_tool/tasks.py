@@ -380,25 +380,13 @@ def finish(c, push=False, branch='master'):
 
         c.run(f'git branch -d {feature_branch}')
 
-        jirac = get_jira()
-        if jirac:
-            ticket = get_jira().issue(f'{project}-{branch_num}')
-
-            # Transition Ticket
-            if ticket.fields.status.id == '10018':  # '10018' = In Code Review.
-                print_bold(f'Transitioning {project}-{branch_num} in Jira to "Closed"')
-                jirac.transition_issue(ticket, '981')  # '981' = Close Issue
-            else:
-                print_bold(f'{project}-{branch_num} in Jira is not in '
-                           f'"In Code Review" status, not updating Jira')
-        else:
-            print_bold(f'Please manually add a link of your code review to: '
-                       f'https://jira.mongodb.org/browse/{project}-{commit_num}')
-
     print_bold(
         'Please remember to close this issue and add a comment of your patch build link '
-        'if you haven\'t already. The comment should have "Developer" visibility')
+        'if you haven\'t already. The comment should have "Developer" visibility.')
     print_bold(f'https://jira.mongodb.com/browse/{project}-{branch_num}')
+
+    print_bold(
+        'Please also remember to close your code review at https://mongodbcr.appspot.com/mine.')
 
     self_update(c)
 
