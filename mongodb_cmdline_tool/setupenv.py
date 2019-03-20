@@ -138,8 +138,9 @@ def _set_env_vars(c):
 
         f.write('\n'.join(lines))
 
-    with open('default-evergreen-config.yml') as f:
-        conf = f.read()
+    with c.cd(str(kConfigDir / 'server-workflow-tool' / 'mongodb_cmdline_tool' / 'templates')):
+        with open('default-evergreen-config.yml') as f:
+            conf = f.read()
 
     with open(str(kHome / '.evergreen.yml'), 'a') as f:
         f.write(conf)
