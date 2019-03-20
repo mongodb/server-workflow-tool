@@ -128,15 +128,16 @@ def macos(c):
 
 @task
 def _set_env_vars(c):
-    with open('profile', 'w') as f:
-        lines = [
-            f'export PATH=/opt/mongodbtoolchain/v2/bin:$HOME/bin:$PATH'
-        ]
+    with c.cd(str(kConfigDir / 'server-workflow-tool' / 'mongodb_cmdline_tool')):
+        with open('profile', 'w') as f:
+            lines = [
+                f'export PATH=/opt/mongodbtoolchain/v2/bin:$HOME/bin:$PATH'
+            ]
 
-        if env_editor:
-            lines.append(f'export EDITOR={env_editor}')
+            if env_editor:
+                lines.append(f'export EDITOR={env_editor}')
 
-        f.write('\n'.join(lines))
+            f.write('\n'.join(lines))
 
     with open('default-evergreen-config.yml') as f:
         conf = f.read()
