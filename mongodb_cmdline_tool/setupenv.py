@@ -109,8 +109,8 @@ def macos(c):
 
     with c.cd(f'{kHome / "mongo"}'):
         c.run('pip3 install -r buildscripts/requirements.txt')  # Ignore permission errors.
-        c.run('pip2 install -r buildscripts/requirements.txt')  # Ignore permission errors.
-        c.run('pip2 install regex', warn=False)
+        c.run('python2 -m pip install -r buildscripts/requirements.txt')  # Ignore permission errors.
+        c.run('python2 -m pip install regex', warn=False)
 
     print_bold('Installing MongoDB Toolchain')
     _install_binary(c, kToolchainURL, f'toolchain.tar.gz', 'mongodbtoolchain', kOptDir, untar=True)
@@ -226,7 +226,7 @@ def _install_editor(c):
             editor = default_editor
 
         # Hide stdout and stderr by default because editor may be a cask.
-        res = c.run(f'brew install --upgrade {editor}', hide='both')
+        res = c.run(f'brew install {editor}', hide='both')
         if res.return_code is not kSuccess:
             res_cask = c.run(f'brew cask reinstall {editor}', hide='both')
             if res_cask.return_code is not kSuccess:
@@ -284,7 +284,7 @@ def macos_extra(c):
     :return:
     """
     print_bold('Installing ninja')
-    c.run('brew install --upgrade ninja')
+    c.run('brew install ninja')
 
     modules_dir = str(kHome / 'mongo' / 'src' / 'mongo' / 'db' / 'modules')
     c.run(f'mkdir -p {modules_dir}')
@@ -293,7 +293,7 @@ def macos_extra(c):
         # Ignore errors since ninja may already exist.
         c.run('git clone https://github.com/RedBeard0531/mongo_module_ninja ninja', warn=True)
     with c.cd(str(kHome / 'mongo')):
-        ninja_cmd = 'python buildscripts/scons.py CC=clang CXX=clang++ '
+        ninja_cmd = 'python2 buildscripts/scons.py CC=clang CXX=clang++ '
         ninja_cmd += 'CCFLAGS=-Wa,--compress-debug-sections '
         ninja_cmd += 'MONGO_VERSION=\'0.0.0\' MONGO_GIT_HASH=\'unknown\' '
         ninja_cmd += 'VARIANT_DIR=ninja --modules=ninja build.ninja'
@@ -303,5 +303,5 @@ def macos_extra(c):
 
     # Ignore errors since CLion already exists.
     c.run('brew cask install clion', warn=True)
-    with c.cd(kPackageDir):
+    with c.cd(str(kConfigDir / 'server-workflow-tool' / 'mongodb_cmdline_tool' / 'templates')):
         c.run('cp mongo-cmakelists.txt ~/mongo/CMakeLists.txt')

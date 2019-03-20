@@ -31,6 +31,7 @@ echo "source ~/.profile" >> ~/.zshrc
 
 # Run install script.
 m -w setup-dev-env.macos
+m -w setup-dev-env.macos-extra
 ```
 
 
