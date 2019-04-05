@@ -206,8 +206,8 @@ def _set_evergreen_config(c):
               'continue')
         webbrowser.open('https://evergreen.mongodb.com/settings')
 
-        input('Once you have added your credentials to ~/.evergreen.yml and entered your user and '
-              'notification settings on the web UI, press any key to continue')
+        input('Once you have created ~/.evergreen.yml, added your credentials to it and entered '
+              'your user and notification settings on the web UI, press any key to continue')
 
     with open(pathlib.Path.home() / '.evergreen.yml') as evg_file:
         evg_config = yaml.load(evg_file)

@@ -21,9 +21,6 @@ git clone https://github.com/mongodb/server-workflow-tool
 cd server-workflow-tool
 pip3 install .
 
-# Create additional files needed by various configurations.
-touch ~/.evergreen.yml
-
 # Add the workflow tool to PATH.
 echo "source ~/.config/server-workflow-tool/profile" >> ~/.profile
 echo "source ~/.profile" >> ~/.bashrc
