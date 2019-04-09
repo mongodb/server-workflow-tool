@@ -48,13 +48,13 @@ Usage: m(mongodb command line tool) <subcommand> [--subcommand-opts] ...
 
 Subcommands:
 
-  commit (c)                             Step 4: Wrapper around git commit to automatically add changes and fill in the ticket number
-  finish (f)                             Step 7: Finalize your changes. Merge them with the base branch and optionally push upstream.
-  lint (l)                               Step 3: lint and format your code: Wrapper around clang_format and eslint.
+  commit (c)                             Step 3: Wrapper around git commit to automatically add changes and fill in the ticket number
+  finish (f)                             Step 6: Finalize your changes. Merge them with the base branch and optionally push upstream.
+  lint (l)                               Step 2: lint and format your code: Wrapper around clang_format and eslint.
   new (n)                                Step 1: Create or switch to the branch for a ticket.
   open-jira (j)                          Open the Jira link for the ticket you're currently working on.
-  patch (p)                              Step 6: Run patch build in Evergreen.
-  review (r)                             Step 5: Put your code up for code review.
+  patch (p)                              Step 5: Run patch build in Evergreen.
+  review (r)                             Step 4: Put your code up for code review.
   self-update (u)                        Update this tool.
   setup-dev-env._check-homebrew-exists
   setup-dev-env._checkout-repo
