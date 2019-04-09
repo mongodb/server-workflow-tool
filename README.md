@@ -55,7 +55,6 @@ Subcommands:
   open-jira (j)                          Open the Jira link for the ticket you're currently working on.
   patch (p)                              Step 6: Run patch build in Evergreen.
   review (r)                             Step 5: Put your code up for code review.
-  scons (s)                              Step 2: [experimental] Check your code compiles, wrapper around "python buildscripts/scons.py".
   self-update (u)                        Update this tool.
   setup-dev-env._check-homebrew-exists
   setup-dev-env._checkout-repo

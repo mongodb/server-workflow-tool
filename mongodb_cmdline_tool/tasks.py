@@ -153,16 +153,6 @@ def checkout_master(c, pull=False):
         c.run('git rebase origin/master')
 
 
-@task(aliases='s')
-def scons(c):
-    """
-    Step 2: [experimental] Check your code compiles, wrapper around "python buildscripts/scons.py".
-    """
-    init(c)
-    num_cpus = os.cpu_count()
-    c.run(f'ninja core -j{num_cpus}', pty=True)
-
-
 @task(aliases='l', optional=['eslint'])
 def lint(c, eslint=False):
     """
