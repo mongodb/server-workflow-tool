@@ -38,10 +38,14 @@ kEvgConfigPath = pathlib.Path.home() / '.evergreen.yml'
 # GitHub constants
 kGitHubAddSSHHelpURL = ('https://help.github.com/articles/'
                         'generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac')
-kRepositoryURLs = {
-    'mongo': 'git@github.com:mongodb/mongo.git',
-    'kernel-tools': 'git@github.com:10gen/kernel-tools.git'
-}
+kRepositories = [
+    {'source_loc': 'git@github.com:mongodb/mongo.git',
+     'target_loc': 'mongo'},
+    {'source_loc': 'git@github.com/10gen/mongo-enterprise-modules',
+     'target_loc': 'mongo/src/mongo/db/modules/'},
+    {'source_loc': 'git@github.com:10gen/kernel-tools.git',
+     'target_loc': 'kernel-tools'}
+]
 # Runtime configuration
 jira_username = None
 jira_password = None
@@ -88,9 +92,9 @@ def macos(c):
     print_bold('Creating SSH keys')
     _create_ssh_keys(c)
 
-    print_bold(f'Checking out the following git repositories: {kRepositoryURLs}')
-    for name, url in kRepositoryURLs.items():
-        _checkout_repo(c, name, url)  # TODO: allow the user to specify clone location.
+    print_bold(f'Checking out your git repositories')
+    for repo in kRepositories:
+        _checkout_repo(c, repo['source_loc'], repo['target_loc'])
 
     print_bold('Installing git hooks for the mongo repo')
     _install_git_hook(c)
@@ -170,13 +174,13 @@ def _create_db_dir(c):
 
 
 @task
-def _checkout_repo(c, name, url):
+def _checkout_repo(c, source_loc, target_loc):
     parent_dir = kHome
     with c.cd(str(parent_dir)):
-        if os.path.exists(parent_dir / name):
-            print(f'Found existing directory {parent_dir / name}, skipping cloning {url}')
+        if os.path.exists(parent_dir / target_loc):
+            print(f'Found existing directory {parent_dir / target_loc}, skipping cloning {source_loc}')
         else:
-            c.run(f'git clone {url}', warn=False)
+            c.run(f'git clone {source_loc} {target_loc}', warn=False)
 
 
 @task
