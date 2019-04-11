@@ -173,8 +173,8 @@ def lint(c, eslint=False):
     init(c)
     with c.cd(str(kHome / 'mongo')):
         if eslint:
-            c.run('python2 buildscripts/eslint.py fix')
-        c.run('python2 buildscripts/clang_format.py format')
+            c.run('python buildscripts/eslint.py fix')
+        c.run('python buildscripts/clang_format.py format')
 
 
 @task(aliases='c')
@@ -230,7 +230,7 @@ def review(c, new_cr=False, browser=True):
 
     commit_msg = c.run('git log --oneline -1 --pretty=%s', hide=True).stdout.strip()
 
-    cmd = f'python2 {kScriptDir / "upload.py"} --rev HEAD~1 --nojira -y '
+    cmd = f'python {kScriptDir / "upload.py"} --rev HEAD~1 --nojira -y '
 
     if project == 'server':
         cmd += '--git_similarity 90 --check-clang-format --check-eslint'
