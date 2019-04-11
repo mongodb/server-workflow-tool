@@ -34,9 +34,8 @@ against by using the '--rev' option.
 # This code is derived from appcfg.py in the App Engine SDK (open source),
 # and from ASPN recipe #146306.
 
-import BaseHTTPServer
-import ConfigParser
-import cookielib
+from __future__ import print_function
+
 import errno
 import fnmatch
 import getpass
@@ -50,10 +49,13 @@ import socket
 import subprocess
 import sys
 import tempfile
-import urllib
-import urllib2
-import urlparse
 import webbrowser
+
+from six.moves import urllib
+from six.moves import configparser
+from six.moves import input
+from six.moves import BaseHTTPServer
+from six.moves import http_cookiejar
 
 from multiprocessing.pool import ThreadPool
 
@@ -71,6 +73,8 @@ except ImportError:
 try:
   import keyring
 except ImportError:
+  print("WARNING: Dependency missing for storing credentials.  " \
+        "Please 'pip install keyring' in order to avoid future password prompts")
   keyring = None
 
 # The logging verbosity:
@@ -154,6 +158,8 @@ AUTH_HANDLER_RESPONSE = """\
   </body>
 </html>
 """
+if sys.version_info >= (3, 0):
+  AUTH_HANDLER_RESPONSE = AUTH_HANDLER_RESPONSE.encode('utf-8')
 # Borrowed from google-api-python-client
 OPEN_LOCAL_MESSAGE_TEMPLATE = """\
 Your browser has been opened to visit:
@@ -185,10 +191,10 @@ def UpdateJiraCases(jira_server, jira_user, jira_tickets, issue):
   try:
     import requests
   except ImportError:
-    print "WARNING: Dependency missing for updating Jira.  Please 'pip install requests'."
+    print("WARNING: Dependency missing for updating Jira.  Please 'pip install requests'.")
     return
 
-  print "Updating jira tickets " + ', '.join(jira_tickets)
+  print("Updating jira tickets " + ', '.join(jira_tickets))
   jira_url = jira_server + '/rest/api/2'
   jira_auth_url = jira_server + '/rest/auth/1'
 
@@ -203,17 +209,17 @@ def UpdateJiraCases(jira_server, jira_user, jira_tickets, issue):
     auth_response.raise_for_status()
     auth_cookies = auth_response.cookies
   except requests.exceptions.Timeout:
-    print 'Network Connection timed out'
+    print('Network Connection timed out')
     return
   except requests.exceptions.HTTPError:
     if auth_response.status_code == 403:
-      print 'CAPTCHA required!  Go to', jira_server, 'and logout and log back in to use this tool.'
+      print('CAPTCHA required!  Go to', jira_server, 'and logout and log back in to use this tool.')
       return
     elif auth_response.status_code == 401:
-      print 'Incorrect password'
+      print('Incorrect password')
       return
     else:
-      print 'An unknown error occurred authenticating to Jira'
+      print('An unknown error occurred authenticating to Jira')
       return
   issue_comment = 'Code review url: %s' % issue
   for ticket in jira_tickets:
@@ -227,7 +233,7 @@ def UpdateJiraCases(jira_server, jira_user, jira_tickets, issue):
                                                                }, cookies=auth_cookies, timeout=CONN_TIMEOUT)
       comment_response.raise_for_status()
     except (requests.exceptions.HTTPError, requests.exceptions.Timeout) as ex:
-      print "Failed to add comment to ticket %s: %s" % (ticket, ex)
+      print("Failed to add comment to ticket %s: %s" % (ticket, ex))
       return
 
   # Change state to In Code Review if we can. -- try different transitions for different start state
@@ -240,7 +246,7 @@ def UpdateJiraCases(jira_server, jira_user, jira_tickets, issue):
       status_response.raise_for_status()
       issue_status = status_response.json()["fields"]["status"]["name"]
     except (requests.exceptions.HTTPError, requests.exceptions.Timeout) as ex:
-      print "EXCEPTION! %s" % ex
+      print("EXCEPTION! %s" % ex)
     if issue_status.lower() != IN_CODE_REVIEW_STATUS.lower():
       # figure out what the code review transition code is
       try:
@@ -256,11 +262,11 @@ def UpdateJiraCases(jira_server, jira_user, jira_tickets, issue):
             updated = True
             break
         if not updated:
-          print "Failed to transition to 'In Code Review' for ticket %s" % (ticket)
+          print("Failed to transition to 'In Code Review' for ticket %s" % (ticket))
       except (requests.exceptions.HTTPError, requests.exceptions.Timeout) as ex:
-        print "EXCEPTION! %s" % ex
+        print("EXCEPTION! %s" % ex)
     else:
-      print "Ticket %s is already in status 'In Code Review'" % (ticket)
+      print("Ticket %s is already in status 'In Code Review'" % (ticket))
 
 
 def GetEmail(prompt):
@@ -280,15 +286,16 @@ def GetEmail(prompt):
       last_email = last_email_file.readline().strip("\n")
       last_email_file.close()
       prompt += " [%s]" % last_email
-    except IOError, e:
+    except IOError as e:
       pass
-  email = raw_input(prompt + ": ").strip()
+
+  email = input(prompt + ": ").strip()
   if email:
     try:
       last_email_file = open(last_email_file_name, "w")
       last_email_file.write(email)
       last_email_file.close()
-    except IOError, e:
+    except IOError as e:
       pass
   else:
     email = last_email
@@ -323,7 +330,7 @@ def RunShellWithReturnCodeAndStderr(command, print_output=False,
       line = p.stdout.readline()
       if not line:
         break
-      print line.strip("\n")
+      print(line.strip("\n"))
       output_array.append(line)
     output = "".join(output_array)
   else:
@@ -331,7 +338,7 @@ def RunShellWithReturnCodeAndStderr(command, print_output=False,
   p.wait()
   errout = p.stderr.read()
   if print_output and errout:
-    print >>sys.stderr, errout
+    print(errout, file=sys.stderr)
   p.stdout.close()
   p.stderr.close()
   return output, errout, p.returncode
@@ -422,20 +429,20 @@ def StatusUpdate(msg):
     msg: The string to print.
   """
   if verbosity > 0:
-    print msg
+    print(msg)
 
 
 def ErrorExit(msg):
   """Print an error message to stderr and exit."""
-  print >>sys.stderr, msg
+  print(msg, file=sys.stderr)
   sys.exit(1)
 
 
-class ClientLoginError(urllib2.HTTPError):
+class ClientLoginError(urllib.error.HTTPError):
   """Raised to indicate there was an error authenticating with ClientLogin."""
 
   def __init__(self, url, code, msg, headers, args):
-    urllib2.HTTPError.__init__(self, url, code, msg, headers, None)
+    urllib.error.HTTPError.__init__(self, url, code, msg, headers, None)
     self.args = args
     self._reason = args["Error"]
     self.info = args.get("Info", None)
@@ -497,10 +504,13 @@ class AbstractRpcServer(object):
   def _CreateRequest(self, url, data=None):
     """Creates a new urllib request."""
     LOGGER.debug("Creating request for: '%s' with payload:\n%s", url, data)
-    req = urllib2.Request(url, data=data, headers={"Accept": "text/plain"})
+    if sys.version_info >= (3, 0):
+      if data is not None and not isinstance(data, bytes):
+        data = data.encode('utf-8')
+    req = urllib.request.Request(url, data=data, headers={"Accept": "text/plain"})
     if self.host_override:
       req.add_header("Host", self.host_override)
-    for key, value in self.extra_headers.iteritems():
+    for key, value in self.extra_headers.items():
       req.add_header(key, value)
     return req
 
@@ -524,7 +534,7 @@ class AbstractRpcServer(object):
       account_type = "HOSTED"
     req = self._CreateRequest(
         url="https://www.google.com/accounts/ClientLogin",
-        data=urllib.urlencode({
+        data=urllib.parse.urlencode({
             "Email": email,
             "Passwd": password,
             "service": "ah",
@@ -538,7 +548,7 @@ class AbstractRpcServer(object):
       response_dict = dict(x.split("=")
                            for x in response_body.split("\n") if x)
       return response_dict["Auth"]
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       if e.code == 403:
         body = e.read()
         response_dict = dict(x.split("=", 1) for x in body.split("\n") if x)
@@ -560,14 +570,14 @@ class AbstractRpcServer(object):
     continue_location = "http://localhost/"
     args = {"continue": continue_location, "auth": auth_token}
     req = self._CreateRequest("%s/_ah/login?%s" %
-                              (self.host, urllib.urlencode(args)))
+                              (self.host, urllib.parse.urlencode(args)))
     try:
       response = self.opener.open(req)
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       response = e
     if (response.code != 302 or
         response.info()["location"] != continue_location):
-      raise urllib2.HTTPError(req.get_full_url(), response.code, response.msg,
+      raise urllib.error.HTTPError(req.get_full_url(), response.code, response.msg,
                               response.headers, response.fp)
     self.authenticated = True
 
@@ -590,42 +600,42 @@ class AbstractRpcServer(object):
       credentials = self.auth_function()
       try:
         auth_token = self._GetAuthToken(credentials[0], credentials[1])
-      except ClientLoginError, e:
-        print >>sys.stderr, ''
+      except ClientLoginError as e:
+        print('', file=sys.stderr)
         if e.reason == "BadAuthentication":
           if e.info == "InvalidSecondFactor":
-            print >>sys.stderr, (
+            print((
                 "Use an application-specific password instead "
                 "of your regular account password.\n"
                 "See http://www.google.com/"
-                "support/accounts/bin/answer.py?answer=185833")
+                "support/accounts/bin/answer.py?answer=185833"), file=sys.stderr)
           else:
-            print >>sys.stderr, "Invalid username or password."
+            print("Invalid username or password.", file=sys.stderr)
         elif e.reason == "CaptchaRequired":
-          print >>sys.stderr, (
+          print((
               "Please go to\n"
               "https://www.google.com/accounts/DisplayUnlockCaptcha\n"
               "and verify you are a human.  Then try again.\n"
               "If you are using a Google Apps account the URL is:\n"
-              "https://www.google.com/a/yourdomain.com/UnlockCaptcha")
+              "https://www.google.com/a/yourdomain.com/UnlockCaptcha"), file=sys.stderr)
         elif e.reason == "NotVerified":
-          print >>sys.stderr, "Account not verified."
+          print("Account not verified.", file=sys.stderr)
         elif e.reason == "TermsNotAgreed":
-          print >>sys.stderr, "User has not agreed to TOS."
+          print("User has not agreed to TOS.", file=sys.stderr)
         elif e.reason == "AccountDeleted":
-          print >>sys.stderr, "The user account has been deleted."
+          print("The user account has been deleted.", file=sys.stderr)
         elif e.reason == "AccountDisabled":
-          print >>sys.stderr, "The user account has been disabled."
+          print("The user account has been disabled.", file=sys.stderr)
           break
         elif e.reason == "ServiceDisabled":
-          print >>sys.stderr, ("The user's access to the service has been "
-                               "disabled.")
+          print("The user's access to the service has been "
+                "disabled.", file=sys.stderr)
         elif e.reason == "ServiceUnavailable":
-          print >>sys.stderr, "The service is not available; try again later."
+          print("The service is not available; try again later.", file=sys.stderr)
         else:
           # Unknown error.
           raise
-        print >>sys.stderr, ''
+        print('', file=sys.stderr)
         continue
       self._GetAuthCookie(auth_token)
       return
@@ -665,7 +675,7 @@ class AbstractRpcServer(object):
         args = dict(kwargs)
         url = "%s%s" % (self.host, request_path)
         if args:
-          url += "?" + urllib.urlencode(args)
+          url += "?" + urllib.parse.urlencode(args)
         req = self._CreateRequest(url=url, data=payload)
         req.add_header("Content-Type", content_type)
         if extra_headers:
@@ -676,7 +686,7 @@ class AbstractRpcServer(object):
           response = f.read()
           f.close()
           return response
-        except urllib2.HTTPError, e:
+        except urllib.error.HTTPError as e:
           if tries > 3:
             raise
           elif e.code == 401 or e.code == 302:
@@ -686,7 +696,7 @@ class AbstractRpcServer(object):
           elif e.code == 301:
             # Handle permanent redirect manually.
             url = e.info()["location"]
-            url_loc = urlparse.urlparse(url)
+            url_loc = urllib.parse.urlparse(url)
             self.host = '%s://%s' % (url_loc[0], url_loc[1])
           elif e.code >= 500:
             # TODO: We should error out on a 500, but the server is too flaky
@@ -720,35 +730,35 @@ class HttpRpcServer(AbstractRpcServer):
     Returns:
       A urllib2.OpenerDirector object.
     """
-    opener = urllib2.OpenerDirector()
-    opener.add_handler(urllib2.ProxyHandler())
-    opener.add_handler(urllib2.UnknownHandler())
-    opener.add_handler(urllib2.HTTPHandler())
-    opener.add_handler(urllib2.HTTPDefaultErrorHandler())
-    opener.add_handler(urllib2.HTTPSHandler())
-    opener.add_handler(urllib2.HTTPErrorProcessor())
+    opener = urllib.request.OpenerDirector()
+    opener.add_handler(urllib.request.ProxyHandler())
+    opener.add_handler(urllib.request.UnknownHandler())
+    opener.add_handler(urllib.request.HTTPHandler())
+    opener.add_handler(urllib.request.HTTPDefaultErrorHandler())
+    opener.add_handler(urllib.request.HTTPSHandler())
+    opener.add_handler(urllib.request.HTTPErrorProcessor())
     if self.save_cookies:
       self.cookie_file = os.path.expanduser("~/.codereview_upload_cookies")
-      self.cookie_jar = cookielib.MozillaCookieJar(self.cookie_file)
+      self.cookie_jar = http_cookiejar.MozillaCookieJar(self.cookie_file)
       if os.path.exists(self.cookie_file):
         try:
           self.cookie_jar.load()
           self.authenticated = True
           StatusUpdate("Loaded authentication cookies from %s" %
                        self.cookie_file)
-        except (cookielib.LoadError, IOError):
+        except (http_cookiejar.LoadError, IOError):
           # Failed to load cookies - just ignore them.
           pass
       else:
         # Create an empty cookie file with mode 600
-        fd = os.open(self.cookie_file, os.O_CREAT, 0600)
+        fd = os.open(self.cookie_file, os.O_CREAT, 0o600)
         os.close(fd)
       # Always chmod the cookie file
-      os.chmod(self.cookie_file, 0600)
+      os.chmod(self.cookie_file, 0o600)
     else:
       # Don't save cookies across runs of update.py.
-      self.cookie_jar = cookielib.CookieJar()
-    opener.add_handler(urllib2.HTTPCookieProcessor(self.cookie_jar))
+      self.cookie_jar = http_cookiejar.CookieJar()
+    opener.add_handler(urllib.request.HTTPCookieProcessor(self.cookie_jar))
     return opener
 
 
@@ -969,11 +979,11 @@ class ClientRedirectHandler(BaseHTTPServer.BaseHTTPRequestHandler):
     Will only do this if exactly one query parameter was passed in to the
     request and that query parameter used 'access_token' or 'error' as the key.
     """
-    query_string = urlparse.urlparse(self.path).query
-    query_params = urlparse.parse_qs(query_string)
+    query_string = urllib.parse.urlparse(self.path).query
+    query_params = urllib.parse.parse_qs(query_string)
 
     if len(query_params) == 1:
-      if query_params.has_key(ACCESS_TOKEN_PARAM):
+      if ACCESS_TOKEN_PARAM in query_params:
         access_token_list = query_params[ACCESS_TOKEN_PARAM]
         if len(access_token_list) == 1:
           self.server.access_token = access_token_list[0]
@@ -1017,7 +1027,7 @@ def OpenOAuth2ConsentPage(server=DEFAULT_REVIEW_SERVER,
     A boolean indicating whether the page opened successfully.
   """
   path = OAUTH_PATH_PORT_TEMPLATE % {'port': port}
-  parsed_url = urlparse.urlparse(server)
+  parsed_url = urllib.parse.urlparse(server)
   scheme = parsed_url[0] or 'https'
   if scheme != 'https':
     ErrorExit('Using OAuth requires a review server with SSL enabled.')
@@ -1027,12 +1037,12 @@ def OpenOAuth2ConsentPage(server=DEFAULT_REVIEW_SERVER,
   page = '%s://%s%s' % (scheme, host, path)
   page_opened = webbrowser.open(page, new=1, autoraise=True)
   if page_opened:
-    print OPEN_LOCAL_MESSAGE_TEMPLATE % (page,)
+    print(OPEN_LOCAL_MESSAGE_TEMPLATE % (page,))
   return page_opened
 
 
 def WaitForAccessToken(port=DEFAULT_OAUTH2_PORT):
-  """Spins up a simple HTTP Server to handle a single request.
+  """Spins up a simple BaseHTTPServer to handle a single request.
 
   Intended to handle a single redirect from the production server after the
   user authenticated via OAuth 2.0 with the server.
@@ -1077,14 +1087,14 @@ def GetAccessToken(server=DEFAULT_REVIEW_SERVER, port=DEFAULT_OAUTH2_PORT,
     if page_opened:
       try:
         access_token = WaitForAccessToken(port=port)
-      except socket.error, e:
-        print 'Can\'t start local webserver. Socket Error: %s\n' % (e.strerror,)
+      except socket.error as e:
+        print('Can\'t start local webserver. Socket Error: %s\n' % (e.strerror,))
 
   if access_token is None:
     # TODO(dhermes): Offer to add to clipboard using xsel, xclip, pbcopy, etc.
     page = 'https://%s%s' % (server, OAUTH_PATH)
-    print NO_OPEN_LOCAL_MESSAGE_TEMPLATE % (page,)
-    access_token = raw_input('Enter access token: ').strip()
+    print(NO_OPEN_LOCAL_MESSAGE_TEMPLATE % (page,))
+    access_token = input('Enter access token: ').strip()
 
   return access_token
 
@@ -1119,15 +1129,15 @@ class KeyringCreds(object):
       except:
         # Sadly, we have to trap all errors here as
         # gnomekeyring.IOError inherits from object. :/
-        print "Failed to get password from keyring"
+        print("Failed to get password from keyring")
         keyring = None
     if password is not None:
-      print "Using password from system keyring."
+      print("Using password from system keyring.")
       self.accounts_seen.add(email)
     else:
-      password = getpass.getpass("Password for %s: " % email)
+      password = getpass.getpass("Password for %s: " % email, stream=sys.stdin)
       if keyring:
-        answer = raw_input("Store password in system keyring?(y/N) ").strip()
+        answer = input("Store password in system keyring?(y/N) ").strip()
         if answer == "y":
           keyring.set_password(self.host, email, password)
           self.accounts_seen.add(email)
@@ -1222,8 +1232,12 @@ def EncodeMultipartFormData(fields, files):
     lines.append('--' + BOUNDARY)
     lines.append('Content-Disposition: form-data; name="%s"' % key)
     lines.append('')
-    if isinstance(value, unicode):
-      value = value.encode('utf-8')
+    if sys.version_info < (3, 0):
+      if isinstance(value, unicode):
+        value = value.encode('utf-8')
+    else:
+        if isinstance(value, bytes):
+          value = value.decode('utf-8')
     lines.append(value)
   for (key, filename, value) in files:
     lines.append('--' + BOUNDARY)
@@ -1231,13 +1245,19 @@ def EncodeMultipartFormData(fields, files):
              (key, filename))
     lines.append('Content-Type: %s' % GetContentType(filename))
     lines.append('')
-    if isinstance(value, unicode):
-      value = value.encode('utf-8')
+    if sys.version_info < (3, 0):
+      if isinstance(value, unicode):
+        value = value.encode('utf-8')
+    else:
+      if isinstance(value, bytes):
+        value = value.decode('utf-8')
     lines.append(value)
   lines.append('--' + BOUNDARY + '--')
   lines.append('')
   body = CRLF.join(lines)
   content_type = 'multipart/form-data; boundary=%s' % BOUNDARY
+  if sys.version_info >= (3, 0):
+    body = body.encode('utf-8')
   return content_type, body
 
 
@@ -1275,7 +1295,7 @@ def RunShellWithReturnCodeAndStderr(command, print_output=False,
       line = p.stdout.readline()
       if not line:
         break
-      print line.strip("\n")
+      print(line.strip("\n"))
       output_array.append(line)
     output = "".join(output_array)
   else:
@@ -1283,7 +1303,7 @@ def RunShellWithReturnCodeAndStderr(command, print_output=False,
   p.wait()
   errout = p.stderr.read()
   if print_output and errout:
-    print >>sys.stderr, errout
+    print(errout, file=sys.stderr)
   p.stdout.close()
   p.stderr.close()
   return output, errout, p.returncode
@@ -1347,11 +1367,11 @@ class VersionControlSystem(object):
     """Show an "are you sure?" prompt if there are unknown files."""
     unknown_files = self.GetUnknownFiles()
     if unknown_files:
-      print "The following files are not added to version control:"
+      print("The following files are not added to version control:")
       for line in unknown_files:
-        print line
-      prompt = "Are you sure to continue?(y/N) "
-      answer = raw_input(prompt).strip()
+        print(line)
+      prompt = "Are you sure you want to continue?(y/N) "
+      answer = input(prompt).strip()
       if answer != "y":
         ErrorExit("User aborted")
 
@@ -1409,7 +1429,11 @@ class VersionControlSystem(object):
         content = ""
       elif options.verbose:
         result = "Uploading %s file for %s" % (type, filename)
-      checksum = md5(content).hexdigest()
+      hash_base = content
+      if sys.version_info >= (3, 0) and isinstance(content, str):
+        hash_base = hash_base.encode("utf-8")
+      checksum = md5(hash_base).hexdigest()
+
       url = "/%d/upload_content/%d/%d" % (int(issue), int(patchset), file_id)
       form_fields = [("filename", filename),
                      ("status", status),
@@ -1425,7 +1449,8 @@ class VersionControlSystem(object):
                                             [("data", filename, content)])
       try:
         response_body = rpc_server.Send(url, body, content_type=ctype)
-      except urllib2.HTTPError, e:
+        response_body = response_body.decode('utf-8')
+      except urllib.error.HTTPError as e:
         response_body = ("Failed to upload file for %s. Got %d status code." %
             (filename, e.code))
 
@@ -1441,7 +1466,7 @@ class VersionControlSystem(object):
     threads = []
     thread_pool = ThreadPool(options.num_upload_threads)
 
-    for filename in patches.keys():
+    for filename in list(patches.keys()):
       base_content, new_content, is_binary, status = files[filename]
       file_id_str = patches.get(filename)
       if file_id_str.find("nobase") != -1:
@@ -1458,7 +1483,7 @@ class VersionControlSystem(object):
         threads.append(t)
 
     for t in threads:
-      print t.get(timeout=60)
+      print(t.get(timeout=60))
 
 
   def IsImage(self, filename):
@@ -1472,6 +1497,8 @@ class VersionControlSystem(object):
     """Returns true if data contains a null byte."""
     # Derived from how Mercurial's heuristic, see
     # http://selenic.com/hg/file/848a6658069e/mercurial/util.py#l229
+    if sys.version_info >= (3, 0):
+      return bool(data and b"\0" in data)
     return bool(data and "\0" in data)
 
 
@@ -1512,7 +1539,7 @@ class SubversionVCS(VersionControlSystem):
     """
     url = self._GetInfo("URL")
     if url:
-        scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
+        scheme, netloc, path, params, query, fragment = urllib.parse.urlparse(url)
         guess = ""
         # TODO(anatoli) - repository specific hacks should be handled by server
         if netloc == "svn.python.org" and scheme == "svn+ssh":
@@ -1523,7 +1550,7 @@ class SubversionVCS(VersionControlSystem):
           scheme = "http"
           guess = "Google Code "
         path = path + "/"
-        base = urlparse.urlunparse((scheme, netloc, path, params,
+        base = urllib.parse.urlunparse((scheme, netloc, path, params,
                                     query, fragment))
         LOGGER.info("Guessed %sbase = %s", guess, base)
         return base
@@ -2119,7 +2146,7 @@ class PerforceVCS(VersionControlSystem):
           ErrorExit("Error checking perforce login")
         if not retcode and (not "code" in data or data["code"] != "error"):
           break
-        print "Enter perforce password: "
+        print("Enter perforce password: ")
         self.RunPerforceCommandWithReturnCode(["login"])
 
     super(PerforceVCS, self).__init__(options)
@@ -2482,7 +2509,7 @@ def UploadSeparatePatches(issue, rpc_server, patchset, data, options):
 
     try:
       response_body = rpc_server.Send(url, body, content_type=ctype)
-    except urllib2.HTTPError, e:
+    except urllib.error.HTTPError as e:
       response_body = ("Failed to upload patch for %s. Got %d status code." %
           (filename, e.code))
 
@@ -2499,8 +2526,8 @@ def UploadSeparatePatches(issue, rpc_server, patchset, data, options):
   rv = []
   for patch in patches:
     if len(patch[1]) > MAX_UPLOAD_SIZE:
-      print ("Not uploading the patch for " + patch[0] +
-             " because the file is too large.")
+      print(("Not uploading the patch for " + patch[0] +
+             " because the file is too large."))
       continue
 
     filename = patch[0]
@@ -2511,7 +2538,7 @@ def UploadSeparatePatches(issue, rpc_server, patchset, data, options):
 
   for t in threads:
     result = t.get(timeout=60)
-    print result[0]
+    print(result[0])
     rv.append(result[1])
 
   return rv
@@ -2532,7 +2559,7 @@ def GuessVCSName(options):
     output is a string containing any interesting output from the vcs
     detection routine, or None if there is nothing interesting.
   """
-  for attribute, value in options.__dict__.iteritems():
+  for attribute, value in options.__dict__.items():
     if attribute.startswith("p4") and value != None:
       return (VCS_PERFORCE, None)
 
@@ -2546,7 +2573,8 @@ def GuessVCSName(options):
       out, returncode = RunShellWithReturnCode(command)
       if returncode == 0:
         return (vcs_type, out.strip())
-    except OSError, (errcode, message):
+    except OSError as xxx_todo_changeme:
+      (errcode, message) = xxx_todo_changeme.args
       if errcode != errno.ENOENT:  # command not found code
         raise
 
@@ -2654,7 +2682,7 @@ def LoadSubversionAutoProperties():
     subversion_config = os.path.expanduser("~/.subversion/config")
   if not os.path.exists(subversion_config):
     return {}
-  config = ConfigParser.ConfigParser()
+  config = configparser.ConfigParser()
   config.read(subversion_config)
   if (config.has_section("miscellany") and
       config.has_option("miscellany", "enable-auto-props") and
@@ -2767,7 +2795,7 @@ def CheckClangFormat(data, location, script):
     """Run clang-format against the files in the supplied patch
         Note: This will check the files, not the patch itself
     """
-    print 'Checking Clang-Format for patch'
+    print('Checking Clang-Format for patch')
 
     # Find clang_format.py if user did not specify it
     if not script:
@@ -2781,7 +2809,7 @@ def CheckClangFormat(data, location, script):
             temp_file.write(data)
             temp_file.flush()
 
-            cmd = ['python2', script, 'lint-patch']
+            cmd = ['python', script, 'lint-patch']
             if location:
                 cmd.append('--clang-format=' + location)
             cmd.append(temp_file.name)
@@ -2811,7 +2839,7 @@ def CheckESLint(data, location, script):
     """Run ESLint against the files in the supplied patch
         Note: This will check the files, not the patch itself
     """
-    print 'Checking ESLint for patch'
+    print('Checking ESLint for patch')
 
     # Find eslint.py if user did not specify it
     if not script:
@@ -2825,7 +2853,7 @@ def CheckESLint(data, location, script):
             temp_file.write(data)
             temp_file.flush()
 
-            cmd = ['python2', script, 'lint-patch']
+            cmd = ['python', script, 'lint-patch']
             if location:
                 cmd.append('--eslint=' + location)
             cmd.append(temp_file.name)
@@ -2876,8 +2904,8 @@ def RealMain(argv, data=None):
     guessed_base = vcs.GuessBase(options.download_base)
     if base:
       if guessed_base and base != guessed_base:
-        print "Using base URL \"%s\" from --base_url instead of \"%s\"" % \
-            (base, guessed_base)
+        print("Using base URL \"%s\" from --base_url instead of \"%s\"" % \
+            (base, guessed_base))
     else:
       base = guessed_base
 
@@ -2894,12 +2922,12 @@ def RealMain(argv, data=None):
   if options.eslint:
       CheckESLint(data, options.eslint_location, options.eslint_script)
   if options.print_diffs:
-    print "Rietveld diff start:*****"
-    print data
-    print "Rietveld diff end:*****"
+    print("Rietveld diff start:*****")
+    print(data)
+    print("Rietveld diff end:*****")
   files = vcs.GetBaseFiles(data)
   if verbosity >= 1:
-    print "Upload server:", options.server, "(change with -s/--server)"
+    print("Upload server:", options.server, "(change with -s/--server)")
   if options.use_oauth2:
     options.save_cookies = False
   rpc_server = GetRpcServer(options.server,
@@ -2916,11 +2944,11 @@ def RealMain(argv, data=None):
   if repo_guid:
     form_fields.append(("repo_guid", repo_guid))
   if base:
-    b = urlparse.urlparse(base)
-    username, netloc = urllib.splituser(b.netloc)
+    b = urllib.parse.urlparse(base)
+    username, netloc = urllib.parse.splituser(b.netloc)
     if username:
       LOGGER.info("Removed username from base URL")
-      base = urlparse.urlunparse((b.scheme, netloc, b.path, b.params,
+      base = urllib.parse.urlunparse((b.scheme, netloc, b.path, b.params,
                                   b.query, b.fragment))
     form_fields.append(("base", base))
   if options.issue:
@@ -2950,7 +2978,7 @@ def RealMain(argv, data=None):
   else:
     prompt = "New issue subject: "
   title = (
-      title or message.split('\n', 1)[0].strip() or raw_input(prompt).strip())
+      title or message.split('\n', 1)[0].strip() or input(prompt).strip())
   if not title and not options.issue:
     ErrorExit("A non-empty title is required for a new issue")
   # For existing issues, it's fine to give a patchset an empty name. Rietveld
@@ -2970,16 +2998,19 @@ def RealMain(argv, data=None):
   # Send a hash of all the base file so the server can determine if a copy
   # already exists in an earlier patchset.
   base_hashes = ""
-  for file, info in files.iteritems():
+  for file, info in files.items():
     if not info[0] is None:
-      checksum = md5(info[0]).hexdigest()
+      hash_base = info[0]
+      if sys.version_info >= (3, 0) and isinstance(info[0], str):
+        hash_base = hash_base.encode("utf-8")
+      checksum = md5(hash_base).hexdigest()
       if base_hashes:
         base_hashes += "|"
       base_hashes += checksum + ":" + file
   form_fields.append(("base_hashes", base_hashes))
   if options.private:
     if options.issue:
-      print "Warning: Private flag ignored when updating an existing issue."
+      print("Warning: Private flag ignored when updating an existing issue.")
     else:
       form_fields.append(("private", "1"))
   if options.send_patch:
@@ -2987,13 +3018,15 @@ def RealMain(argv, data=None):
   if not options.download_base:
     form_fields.append(("content_upload", "1"))
   if len(data) > MAX_UPLOAD_SIZE:
-    print "Patch is large, so uploading file patches separately."
+    print("Patch is large, so uploading file patches separately.")
     uploaded_diff_file = []
     form_fields.append(("separate_patches", "1"))
   else:
     uploaded_diff_file = [("data", "data.diff", data)]
   ctype, body = EncodeMultipartFormData(form_fields, uploaded_diff_file)
   response_body = rpc_server.Send("/upload", body, content_type=ctype)
+  if sys.version_info >= (3, 0):
+    response_body = response_body.decode('utf-8')
   patchset = None
   if not options.download_base or not uploaded_diff_file:
     lines = response_body.splitlines()
@@ -3027,7 +3060,7 @@ def RealMain(argv, data=None):
     payload["send_mail"] = "yes"
     if options.send_patch:
       payload["attach_patch"] = "yes"
-  payload = urllib.urlencode(payload)
+  payload = urllib.parse.urlencode(payload)
   rpc_server.Send("/" + issue + "/upload_complete/" + (patchset or ""),
                   payload=payload)
   description = options.description
@@ -3055,14 +3088,14 @@ def GetPassword(server, user, prompt="Password: "):
     except:
       # Sadly, we have to trap all errors here as
       # gnomekeyring.IOError inherits from object. :/
-      print "Failed to get password from keyring"
+      print("Failed to get password from keyring")
       keyring = None
   if password is not None:
-    print "Using password from system keyring."
+    print("Using password from system keyring.")
   else:
     password = getpass.getpass(prompt)
     if keyring:
-      answer = raw_input("Store password in system keyring?(y/N) ").strip()
+      answer = input("Store password in system keyring?(y/N) ").strip()
       if answer == "y":
         keyring.set_password(server, user, password)
   return password
@@ -3076,7 +3109,7 @@ def main():
     os.environ['LC_ALL'] = 'C'
     RealMain(sys.argv)
   except KeyboardInterrupt:
-    print
+    print()
     StatusUpdate("Interrupted.")
     sys.exit(1)
 
