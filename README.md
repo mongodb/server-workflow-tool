@@ -13,13 +13,19 @@ Command line tool to help MongoDB server engineers set up dev environment and au
 brew install --upgrade python3
 pip3 install --upgrade pip setuptools
 
+# Install virtualenvwrapper and switch to a virtual environment.
+python3 -m pip install virtualenvwrapper
+export VIRTUALENVWRAPPER_PYTHON=$(which python3) [ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
+mkvirtualenv --python python2 mongo_py2
+mkvirtualenv --python python3 mongo
+
 # Clone the workflow tool and install its dependencies.
 mkdir -p ~/.config
 cd ~/.config
 rm -rf server-workflow-tool
 git clone https://github.com/mongodb/server-workflow-tool
 cd server-workflow-tool
-pip3 install .
+pip install .
 
 # Add the workflow tool to PATH.
 echo "source ~/.config/server-workflow-tool/profile" >> ~/.profile
