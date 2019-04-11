@@ -9,5 +9,5 @@ else
         echo >&2 "Warning: Specify a -j flag in the SCONSFLAGS environment variable" \
                  "for faster compiles"
     fi
-    python2 buildscripts/scons.py core
+    python buildscripts/scons.py core
 fi

@@ -113,9 +113,9 @@ def macos(c):
     _set_evergreen_config(c)
 
     with c.cd(f'{kHome / "mongo"}'):
-        c.run('pip3 install -r buildscripts/requirements.txt')  # Ignore permission errors.
-        c.run('python2 -m pip install -r buildscripts/requirements.txt')  # Ignore permission errors.
-        c.run('python2 -m pip install regex', warn=False)
+        c.run('pip install -r buildscripts/requirements.txt')  # Ignore permission errors.
+        c.run('python -m pip install -r buildscripts/requirements.txt')  # Ignore permission errors.
+        c.run('python -m pip install regex', warn=False)
 
     print_bold('Installing MongoDB Toolchain')
     _install_binary(c, kToolchainURL, f'toolchain.tar.gz', 'mongodbtoolchain', kOptDir, untar=True)
@@ -298,7 +298,7 @@ def macos_extra(c):
         # Ignore errors since ninja may already exist.
         c.run('git clone https://github.com/RedBeard0531/mongo_module_ninja ninja', warn=True)
     with c.cd(str(kHome / 'mongo')):
-        ninja_cmd = 'python2 buildscripts/scons.py CC=clang CXX=clang++ '
+        ninja_cmd = 'python buildscripts/scons.py CC=clang CXX=clang++ '
         ninja_cmd += 'CCFLAGS=-Wa,--compress-debug-sections '
         ninja_cmd += 'MONGO_VERSION=\'0.0.0\' MONGO_GIT_HASH=\'unknown\' '
         ninja_cmd += 'VARIANT_DIR=ninja --modules=ninja build.ninja'
