@@ -161,10 +161,12 @@ def lint(c, eslint=False):
     :param eslint: Run ESLint for JS files. Default: False.
     """
     init(c)
-    with c.cd(str(kHome / 'mongo')):
+    # On first run these tools will install artifacts not in the mongo .gitignore file, so we
+    # run them from within ~/bin to run the binaries from a non-version-controlled location.
+    with c.cd(str(kHome / 'bin')):
         if eslint:
-            c.run('python2 buildscripts/eslint.py fix')
-        c.run('python2 buildscripts/clang_format.py format')
+            c.run('python2 ../mongo/buildscripts/eslint.py fix')
+        c.run('python2 ../mongo/buildscripts/clang_format.py format')
 
 
 @task(aliases='c')
