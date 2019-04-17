@@ -133,7 +133,7 @@ def macos(c):
 
 @task
 def _set_env_vars(c):
-    with open(str(kHome / '.profile'), 'w') as f:
+    with open(str(kHome / '.bashrc'), 'a') as f:
         lines = [
             f'export PATH=/opt/mongodbtoolchain/v2/bin:$HOME/bin:$PATH'
         ]
