@@ -15,7 +15,8 @@ pip3 install --upgrade pip setuptools
 
 # Install virtualenvwrapper and switch to a virtual environment.
 python3 -m pip install virtualenvwrapper
-export VIRTUALENVWRAPPER_PYTHON=$(which python3) [ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
+export VIRTUALENVWRAPPER_PYTHON=$(which python3)
+[ -f /usr/local/bin/virtualenvwrapper.sh ] && source /usr/local/bin/virtualenvwrapper.sh
 mkvirtualenv --python python2 mongo_py2
 mkvirtualenv --python python3 mongo
 
