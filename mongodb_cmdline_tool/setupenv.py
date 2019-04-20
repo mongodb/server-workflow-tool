@@ -205,6 +205,8 @@ def _set_evergreen_config(c):
 
     if os.path.isfile(kEvgConfigPath):
         print('Found existing ~/.evergreen.yml, skipping adding Evergreen configuration')
+        print('Please make sure your Evergreen config file contains your API credentials and'
+              ' a default project configuration of mongodb-mongo-master.')
     else:
         input('Opening browser to configure Evergreen Authentication credentials, press any key to'
               'continue')
