@@ -10,8 +10,8 @@ Command line tool to help MongoDB server engineers set up dev environment and au
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 # Download python3 and pip3
-brew install --upgrade python3
-pip3 install --upgrade pip setuptools
+brew install python3
+brew install python2
 
 # Install virtualenvwrapper and switch to a virtual environment.
 python3 -m pip install virtualenvwrapper
