@@ -41,7 +41,7 @@ kGitHubAddSSHHelpURL = ('https://help.github.com/articles/'
 kRepositories = [
     {'source_loc': 'git@github.com:mongodb/mongo.git',
      'target_loc': 'mongo'},
-    {'source_loc': 'git@github.com/10gen/mongo-enterprise-modules',
+    {'source_loc': 'git@github.com:10gen/mongo-enterprise-modules',
      'target_loc': 'mongo/src/mongo/db/modules/'},
     {'source_loc': 'git@github.com:10gen/kernel-tools.git',
      'target_loc': 'kernel-tools'}
