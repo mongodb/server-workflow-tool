@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="server_workflow_tool",
-    version="1.0",
+    version="1.0.1",
     description="MongoDB Server Team Workflow Tool",
     long_description=long_description,
     long_description_content_type="text/markdown",
