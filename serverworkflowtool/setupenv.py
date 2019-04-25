@@ -26,7 +26,7 @@ from invoke import task
 
 from serverworkflowtool import config
 from serverworkflowtool.config import DownloadConfig
-from serverworkflowtool.templates import evergreen_yaml_template
+from serverworkflowtool.templates import evergreen_yaml_template, shell_profile_template
 from serverworkflowtool.utils import get_logger, instruction, log_func, log_err_res
 
 
@@ -81,15 +81,14 @@ def ssh_keys():
 
 
 def clone_repos(ctx):
-    repo_parent_dir = config.HOME / 'mongodb'
-    repo_parent_dir.mkdir(exist_ok=True)
-    get_logger().info('Placing MongoDB Git repositories in %s', repo_parent_dir)
+    config.REPO_ROOT.mkdir(exist_ok=True)
+    get_logger().info('Placing MongoDB Git repositories in %s', config.REPO_ROOT)
 
     res_ok = True
 
-    with ctx.cd(str(repo_parent_dir)):
+    with ctx.cd(str(config.REPO_ROOT)):
         for repo_config in config.REQUIRED_REPOS:
-            repo_dir = repo_parent_dir / repo_config.relative_local
+            repo_dir = config.REPO_ROOT / repo_config.relative_local
             if repo_dir.exists():
                 get_logger().warning(
                     'Local directory %s exists. If you\'d like to re-clone,'
@@ -196,7 +195,83 @@ def download_evergreen(ctx):
 
 
 def install_githooks(ctx):
-    pass
+    hooks_dir = config.HOME / '.githooks'
+
+    # Dupe of path defined in REQUIRED_REPO.
+    kernel_tools_dir = config.REPO_ROOT / 'kernel-tools'
+    mongo_dir = config.REPO_ROOT / 'mongo'
+
+    hooks_dir.mkdir(exist_ok=True, parents=True)
+
+    if not (hooks_dir / 'mongo').exists():
+        res1 = ctx.run(f'ln -s {str(kernel_tools_dir / "githooks")} {str(hooks_dir / "mongo")}')
+        log_err_res(res1)
+
+    with ctx.cd(str(mongo_dir)):
+        res2 = ctx.run(f'source buildscripts/install-hooks -f')
+        log_err_res(res2)
+
+        todo = instruction('TODO:')
+        get_logger().info(f'{todo} Please consult with your mentor on which githooks are needed. '
+                          'Some hooks may be unnecessarily cumbersome for your project.')
+        get_logger().info('      You can delete any unneeded hooks from `%s` and rerun this script',
+                          str(kernel_tools_dir / "githooks" / "pre-push"))
+
+        return res2.ok
+
+
+def setup_mongo_repo_python(ctx):
+    mongo_dir = config.REPO_ROOT / 'mongo'
+    python3_venv_dir = 'python3-venv'
+    res_list = []
+
+    def run_cmds(cmds):
+        for cmd in cmds:
+            res = ctx.run(cmd)
+            get_logger().info('Ran cmd: %s', res.command)
+            log_err_res(res)
+            res_list.append(res)
+
+    with ctx.cd(str(mongo_dir)):
+        if not (mongo_dir / python3_venv_dir).exists():
+            install_venv_cmds = [
+                'python3 -m pip install virtualenv',
+                f'python3 -m virtualenv {python3_venv_dir}',
+            ]
+
+            run_cmds(install_venv_cmds)
+        else:
+            get_logger().warning('Found existing Python3 virtualenv at %s, skipping creating a new one',
+                                 str(mongo_dir / python3_venv_dir))
+
+        with ctx.prefix('source python3-venv/bin/activate'):
+            install_cmds = [
+                'pip install -r etc/pip/dev-requirements.txt',
+                'pip install regex'
+            ]
+
+            run_cmds(install_cmds)
+
+
+def install_ninja(ctx):
+    res = ctx.run('brew install ninja')
+    log_err_res(res)
+    return res.ok
+
+
+def install_shell_profile(ctx):
+    profile = config.CONFIG_DIR / 'profile'
+    with open(profile,  'w') as fh:
+        fh.write(shell_profile_template)
+
+    todo = instruction('TODO:')
+    get_logger().info(f'{todo} Please add the following line to your shell config file, if you haven\'t already ')
+    get_logger().info('      done so. The default shell config file is ~/.bashrc for bash. If you\'re using a')
+    get_logger().info('      different shell, e.g. zsh, you would have a different config file, e.g. ~/.zshrc')
+    get_logger().info('')
+    get_logger().info(instruction('      source %s'), str(profile))
+
+    return True
 
 
 @task
@@ -215,15 +290,13 @@ def macos(ctx):
         (lambda: clone_repos(ctx), 'Clone MongoDB Repositories'),
         (lambda: download_clang_format(ctx), 'Download clang-format'),
         (lambda: download_evergreen(ctx), 'Download evergreen CLI'),
-        (lambda: install_githooks(ctx), 'Install Git Hooks')
+        (lambda: install_ninja(ctx), 'Install ninja'),
+        (lambda: setup_mongo_repo_python(ctx), 'Setup Python Dependencies for the mongo Repository'),
 
-        # githooks
-        # copy profile to .config/server-workflow-tool
-
+        # Do tasks that require followup work last.
+        (lambda: install_githooks(ctx), 'Install Git Hooks'),
+        (lambda: install_shell_profile(ctx), 'Install Shell Profile')
     ]
 
     for func in funcs:
         success = log_func(func[0], func[1])
-        if not success:
-            get_logger().critical('Terminating early due to unexpected error')
-            return 1

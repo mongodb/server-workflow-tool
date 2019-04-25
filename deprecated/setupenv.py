@@ -138,8 +138,6 @@ def _set_env_vars(c):
 
     with open(str(kTemplatesDir / 'default-evergreen-config.yml')) as f:
         conf = f.read()
-
-    with open(str(kHome / '.evergreen.yml'), 'a') as f:
         f.write(conf)
 
 

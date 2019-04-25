@@ -31,3 +31,9 @@ projects:
   tasks:
   - all
     '''
+
+shell_profile_template = \
+    '''
+export PATH=$HOME/bin:$PATH'
+alias m=workflow  # Give the workflow tool a shorter name.
+    '''

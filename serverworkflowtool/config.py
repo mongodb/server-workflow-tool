@@ -31,7 +31,12 @@ from serverworkflowtool.utils import get_logger, instruction
 HOME = pathlib.Path.home()
 USER = getpass.getuser()
 OPT = pathlib.Path('/opt')
-CONFIG_FILE = HOME / '.config' / 'server-workflow-tool' / 'config.pickle'
+
+# Parent directory of all git repositories.
+REPO_ROOT = HOME / 'mongodb'
+
+CONFIG_DIR = HOME / '.config' / 'server-workflow-tool'
+CONFIG_FILE = CONFIG_DIR / 'config.pickle'
 
 EVG_CONFIG_FILE = HOME / '.evergreen.yml'
 SSH_KEY_FILE = HOME / '.ssh' / 'id_rsa'
