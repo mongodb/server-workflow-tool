@@ -17,7 +17,6 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-import os
 import pathlib
 import webbrowser
 
@@ -175,6 +174,28 @@ def download_clang_format(ctx):
 
 
 def download_evergreen(ctx):
+    bin_dir = config.HOME / 'bin'
+
+    if (bin_dir / 'evergreen').exists():
+        get_logger().warning('File %s already exists. Skipping downloading evergreen CLI',
+                             str(bin_dir / 'evergreen'))
+    else:
+        dc = DownloadConfig(
+            'https://evergreen.mongodb.com/clients/darwin_amd64/evergreen',
+            relative_local='bin/evergreen'
+        )
+
+        _do_download(ctx, dc)
+
+    with ctx.cd(str(bin_dir)):
+        # chmod is cheap enough that we'll just always do it instead of checking if it's already done.
+        res = ctx.run('chmod +x evergreen')
+        log_err_res(res)
+
+        return res.ok
+
+
+def install_githooks(ctx):
     pass
 
 
@@ -193,14 +214,16 @@ def macos(ctx):
         (lambda: evergreen_yaml(conf), 'Configure Evergeen'),
         (lambda: clone_repos(ctx), 'Clone MongoDB Repositories'),
         (lambda: download_clang_format(ctx), 'Download clang-format'),
-        (lambda: download_evergreen(ctx), 'Download evergreen CLI')
+        (lambda: download_evergreen(ctx), 'Download evergreen CLI'),
+        (lambda: install_githooks(ctx), 'Install Git Hooks')
 
         # githooks
-        # toolchain
-        # evg binary
-        # clang format
         # copy profile to .config/server-workflow-tool
+
     ]
 
     for func in funcs:
         success = log_func(func[0], func[1])
+        if not success:
+            get_logger().critical('Terminating early due to unexpected error')
+            return 1

@@ -61,15 +61,6 @@ REQUIRED_REPOS = [
     DownloadConfig('git@github.com:10gen/kernel-tools.git', relative_local='kernel-tools')
 ]
 
-# Paths are relative to HOME
-REQUIRED_BINARIES = [
-
-    DownloadConfig(
-        'https://evergreen.mongodb.com/clients/darwin_amd64/evergreen',
-        relative_local='bin/evergreen'
-    )
-]
-
 
 class _ConfigImpl(object):
     instance = None

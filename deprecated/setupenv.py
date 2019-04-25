@@ -148,7 +148,7 @@ def _install_git_hook(c):
     mongo_hooks = kHome / ".githooks" / "mongo"
 
     c.run(f'mkdir -p {mongo_hooks}', warn=False)
-    c.run(f'cp -r {kHome / "kernel-tools" / "githooks"/ "*"} {mongo_hooks}')
+    c.run(f'cp -r {kHome / "kernel-tools" / "githooks" / "*"} {mongo_hooks}')
 
     with c.cd(f'{mongo_hooks}'):
         c.run('rm pre-push/check-uncommitted')

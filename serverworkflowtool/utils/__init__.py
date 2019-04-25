@@ -57,10 +57,12 @@ def instruction(msg):
 def log_func(func, human_name):
     grey = lambda msg: f'\033[90m{msg}\033[0m'
     get_logger().info(grey('    ----- Starting Task: %s -----'), human_name)
-    func()
+    retval = func()
     get_logger().info(grey('    ----- Finished Task: %s -----'), human_name)
     get_logger().info('')
     get_logger().info('')
+
+    return retval
 
 
 def log_err_res(res):
