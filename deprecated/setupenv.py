@@ -167,16 +167,6 @@ def _create_db_dir(c):
 
 
 @task
-def _checkout_repo(c, source_loc, target_loc):
-    parent_dir = kHome
-    with c.cd(str(parent_dir)):
-        if os.path.exists(parent_dir / target_loc):
-            print(f'Found existing directory {parent_dir / target_loc}, skipping cloning {source_loc}')
-        else:
-            c.run(f'git clone {source_loc} {target_loc}', warn=False)
-
-
-@task
 def _create_ssh_keys(c):
     if os.path.isfile(pathlib.Path.home() / '.ssh' / 'id_rsa'):
         print('Found existing id_rsa, skipping creating ssh keys')

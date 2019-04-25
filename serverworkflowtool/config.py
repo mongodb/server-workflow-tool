@@ -29,6 +29,7 @@ import invoke.exceptions
 from serverworkflowtool.utils import get_logger, instruction
 
 HOME = pathlib.Path.home()
+USER = getpass.getuser()
 OPT = pathlib.Path('/opt')
 CONFIG_FILE = HOME / '.config' / 'server-workflow-tool' / 'config.pickle'
 
@@ -43,6 +44,8 @@ GITHUB_SSH_HELP_URL = ('https://help.github.com/articles/'
 class RepoConfig:
     def __init__(self, remote, local):
         self.remote = remote
+
+        # Local path relative to CWD.
         self.local = local
 
 
@@ -68,16 +71,6 @@ class _ConfigImpl(object):
         self._jira_pwd = None
         self._sudo_pwd = None
 
-    def __getstate__(self):
-        d = self.__dict__.copy()
-
-        # Remove sensitive and unnecessary info.
-        d['_jira_pwd'] = None
-        d['_jira'] = None
-        d['_sudo_pwd'] = None
-
-        return d
-
     def __setstate__(self, state):
         # Create instance variables here instead of in __init__
         # because pickle will not add ones from __init__ to __dict__
@@ -91,6 +84,16 @@ class _ConfigImpl(object):
 
         # Restore instance attributes.
         self.__dict__.update(state)
+
+    def __getstate__(self):
+        d = self.__dict__.copy()
+
+        # Remove sensitive and unnecessary info.
+        d['_jira_pwd'] = None
+        d['_jira'] = None
+        d['_sudo_pwd'] = None
+
+        return d
 
     def reset_jira_credentials(self):
         """
@@ -107,7 +110,7 @@ class _ConfigImpl(object):
     def get_sudo_pwd(self, ctx):
         if not self._sudo_pwd:
             while True:
-                sudo_pwd = getpass.getpass(prompt='Please enter your sudo password: ')
+                sudo_pwd = getpass.getpass(prompt=instruction('Please enter your sudo password: '))
 
                 try:
                     # Check if this password works

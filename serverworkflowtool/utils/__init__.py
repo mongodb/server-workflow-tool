@@ -61,3 +61,9 @@ def log_func(func, human_name):
     get_logger().info(grey('    ----- Finished Task: %s -----'), human_name)
     get_logger().info('')
     get_logger().info('')
+
+
+def log_err_res(res):
+    if not res:
+        get_logger().error('Failed to run cmd: `%s`', res.command)
+        get_logger().error(res)

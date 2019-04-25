@@ -16,7 +16,9 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-import os
+
+import getpass
+import pathlib
 import webbrowser
 
 import requests
@@ -25,7 +27,7 @@ from invoke import task
 
 from serverworkflowtool import config
 from serverworkflowtool.templates import evergreen_yaml_template
-from serverworkflowtool.utils import get_logger, instruction, log_func
+from serverworkflowtool.utils import get_logger, instruction, log_func, log_err_res
 
 
 def evergreen_yaml(conf):
@@ -52,12 +54,14 @@ def evergreen_yaml(conf):
                 fh.write(evg_config)
             break
 
+    return True
 
-def ssh_keys(ctx):
+
+def ssh_keys():
     if config.SSH_KEY_FILE.is_file():
         get_logger().info('Found existing key ~/.ssh/id_rsa, skipping setting up ssh keys')
         get_logger().info('Please ensure your keys are added to your GitHub account')
-        return
+        return True
 
     res = input(instruction('Opening browser for instructions to setting up ssh keys in GitHub, '
                             'press any key to continue, enter "skip" to skip: '))
@@ -73,23 +77,72 @@ def ssh_keys(ctx):
             str(config.SSH_KEY_FILE) + ' is not a file, please double check you have completed '
                                        'GitHub\'s guide on setting up SSH keys')
 
+    return True
 
-def clone_repos(ctx, conf):
+
+def clone_repos(ctx):
     repo_parent_dir = config.HOME / 'mongodb'
     repo_parent_dir.mkdir(exist_ok=True)
     get_logger().info('Placing MongoDB Git repositories in %s', repo_parent_dir)
 
-    # for
+    res_ok = True
+
+    with ctx.cd(str(repo_parent_dir)):
+        for repo_config in config.REQUIRED_REPOS:
+            repo_dir = repo_parent_dir / repo_config.local
+            if repo_dir.exists():
+                get_logger().warning(
+                    'Local directory %s exists. If you\'d like to re-clone,'
+                    'please delete this directory first', str(repo_dir))
+            else:
+                cmd = f'git clone {repo_config.remote} {repo_config.local}'
+                res = ctx.run(cmd, hide=False)
+                log_err_res(res)
+
+                res_ok = res and res_ok
+
+
+def create_dir(ctx, conf, dir_absolute):
+    d = pathlib.Path(dir_absolute)
+    if d.exists() and d.owner() == config.USER:
+        get_logger().warning(f'Directory {d} exists and is owned by the current user, skipping creating it')
+        return True
+
+    # Need Invoke for sudo. Can't use native Python mkdir().
+    res1 = ctx.sudo(f'mkdir -p {d}', warn=False, password=conf.get_sudo_pwd(ctx))
+    res2 = ctx.sudo(f'chown {config.USER} {d}', warn=False, password=conf.get_sudo_pwd(ctx))
+
+    if res1 and res2:
+        get_logger().info(f'Created directory {d}')
+        return True
+    else:
+        log_err_res(res1)
+        log_err_res(res2)
+        return False
 
 
 @task
 def macos(ctx):
     conf = config.Config()
 
-    # Create ssh keys and add them to GitHub.
-    # Do this first as it can't be automated.
-    log_func(lambda: ssh_keys(ctx), 'Configure SSH Keys')
+    funcs = [
+        # Do tasks that require user interaction first.
+        (lambda: ssh_keys(), 'Configure SSH Keys'),
+        (lambda: create_dir(ctx, conf, '/data'), 'Create MongoDB Data Directory'),
+        (lambda: create_dir(ctx, conf, '/opt/mongodbtoolchain'), 'Create MongoDB Toolchain Directory'),
+        (lambda: create_dir(ctx, conf, str(config.HOME / 'bin')), 'Create User bin Directory'),
 
-    log_func(lambda: evergreen_yaml(conf), 'Configure Evergeen')
+        # Then do the automated tasks that don't require user interaction.
+        (lambda: evergreen_yaml(conf), 'Configure Evergeen'),
+        (lambda: clone_repos(ctx), 'Clone MongoDB Repositories')
 
-    log_func(lambda: clone_repos(ctx, conf), 'Clone MongoDB Repositories')
+
+        # githooks
+        # toolchain
+        # evg binary
+        # clang format
+        # copy profile to .config/server-workflow-tool
+    ]
+
+    for func in funcs:
+        success = log_func(func[0], func[1])
