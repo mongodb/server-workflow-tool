@@ -17,9 +17,34 @@
 # specific language governing permissions and limitations
 # under the License.
 
+import pkg_resources
+
+from invoke import Program, Collection
+
+from deprecated import setupenv
+from deprecated import tasks
+
 
 def run():
-    print("running")
+    config = {
+        'run': {
+            'echo': True
+        },
+        'NINJA_STATUS': '[%f/%t (%p) %es]'  # make the ninja output even nicer
+    }
+
+    ns = Collection.from_module(tasks, config=config)
+    ns.add_collection(Collection.from_module(setupenv, name='setup-dev-env', config=config))
+
+    proj_info = pkg_resources.require("server_workflow_tool")[0]
+
+    p = Program(
+        binary='workflow',
+        name=proj_info.project_name,
+        namespace=ns,
+        version=proj_info.version)
+
+    p.run()
 
 
 if __name__ == '__main__':
