@@ -276,6 +276,12 @@ def install_shell_profile(ctx):
 
 @task
 def macos(ctx):
+    """
+    TODO: document me
+    
+    :param ctx:
+    :return:
+    """
     conf = config.Config()
 
     funcs = [
@@ -296,6 +302,9 @@ def macos(ctx):
         # Do tasks that require followup work last.
         (lambda: install_githooks(ctx), 'Install Git Hooks'),
         (lambda: install_shell_profile(ctx), 'Install Shell Profile')
+
+        # TODO: upload.py
+        # TODO: generate compile db
     ]
 
     for func in funcs:
