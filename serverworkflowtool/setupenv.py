@@ -16,14 +16,13 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-import logging
 import webbrowser
 
 from invoke import task
 
 from serverworkflowtool import config
 from serverworkflowtool.templates import evergreen_yaml_template
-from serverworkflowtool.utils import get_logger
+from serverworkflowtool.utils import get_logger, instruction
 
 
 def evergreen_yaml(conf):
@@ -31,8 +30,9 @@ def evergreen_yaml(conf):
     jira = conf.jira
 
     if config.EVG_CONFIG_FILE.exists():
-        logging.warning('Found existing ~/.evergreen.yml, skipping adding Evergreen configuration')
-        logging.warning(
+        get_logger().info(
+            'Found existing ~/.evergreen.yml, skipping adding Evergreen configuration')
+        get_logger().info(
             'Please make sure your Evergreen config file contains your API credentials and'
             ' a default project configuration of mongodb-mongo-master.')
 
@@ -51,30 +51,56 @@ def evergreen_yaml(conf):
               'Please copy and paste the string "1234567890abcdef123456" (without quotes). You '
               'may be redirected to a login page first if you\'re not logged in in your '
               'operating system\'s default browser'
-              '\n'
-              'Press any key to continue...')
+              '\n' +
+              instruction('Press any key to continue...'))
         settings_url = 'https://evergreen.mongodb.com/settings'
         get_logger().info('Opening {}'.format(settings_url))
         webbrowser.open(settings_url)
 
         while True:
-            api_key = input('Please paste the hexadecimal api_key here (without quotes): ')
+            api_key = input(
+                instruction('Please paste the hexadecimal api_key here (without quotes): '))
             try:
                 int(api_key, 16)
                 break
             except ValueError as e:
                 get_logger().error(e)
 
-        evg_config = evergreen_yaml_template.format(conf.jira_user, api_key)
+        evg_config = evergreen_yaml_template.format(conf.username, api_key)
 
         with open(config.EVG_CONFIG_FILE, 'w') as fh:
             fh.write(evg_config)
+
+
+def ssh_keys(ctx):
+    if config.SSH_KEY_FILE.is_file():
+        get_logger().info(
+            'Found existing key ~/.ssh/id_rsa, skipping setting up ssh keys. Please ensure'
+            'your keys are added to your GitHub account')
+        return
+
+    res = input(instruction('Opening browser for instructions to setting up ssh keys in GitHub, '
+                            'press any key to continue, enter "skip" to skip: '))
+    if res != 'skip':
+        webbrowser.open(config.GITHUB_SSH_HELP_URL)
+        input(
+            'Once you\'ve generated SSH keys and added them to GitHub, press any key to continue')
+    else:
+        get_logger().info('Skipping adding SSH Keys to GitHub')
+
+    while not (config.SSH_KEY_FILE.is_file()):
+        get_logger().error(
+            str(config.SSH_KEY_FILE) + ' is not a file, please double check you have completed '
+                                       'GitHub\'s guide on setting up SSH keys')
+
+
+def clone_repos(ctx):
 
 
 @task
 def macos(ctx):
     conf = config.Config()
 
-    evergreen_yaml(conf)
-
+    # evergreen_yaml(conf)
+    # ssh_keys(ctx)
 

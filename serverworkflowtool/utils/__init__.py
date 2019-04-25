@@ -45,3 +45,11 @@ def get_logger(level=None):
         logger.addHandler(stdout)
         _logger = logger
     return _logger
+
+
+def instruction(msg):
+    return f'\033[92m{msg}\033[0m'
+
+
+def bold(msg):
+    return f'\n\033[1m{msg}\033[0m'

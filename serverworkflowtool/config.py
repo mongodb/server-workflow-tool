@@ -26,28 +26,22 @@ import keyring
 import invoke.exceptions
 
 # Constants
-from serverworkflowtool.utils import get_logger
+from serverworkflowtool.utils import get_logger, instruction
 
 HOME = pathlib.Path.home()
 OPT = pathlib.Path('/opt')
 CONFIG_FILE = HOME / '.config' / 'server-workflow-tool' / 'config.pickle'
 
 EVG_CONFIG_FILE = HOME / '.evergreen.yml'
+SSH_KEY_FILE = HOME / '.ssh' / 'id_rsa'
 
 JIRA_URL = 'https://jira.mongodb.org'
+GITHUB_SSH_HELP_URL = ('https://help.github.com/articles/'
+                       'generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac')
 
 
 class _ConfigImpl(object):
     instance = None
-
-    def __init__(self):
-        self.git_branches = []
-
-        self.username = None
-
-        self._jira = None
-        self._jira_pwd = None
-        self._sudo_pwd = None
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -60,6 +54,16 @@ class _ConfigImpl(object):
         return d
 
     def __setstate__(self, state):
+        # Create instance variables here instead of in __init__
+        # because pickle will not add ones from __init__ to __dict__
+        self.git_branches = []
+
+        self.username = None
+
+        self._jira = None
+        self._jira_pwd = None
+        self._sudo_pwd = None
+
         # Restore instance attributes.
         self.__dict__.update(state)
 
@@ -69,10 +73,8 @@ class _ConfigImpl(object):
                               entered the wrong password
         """
         if not self.username:
-            while True:
-                self.username = input(
-                    'Please enter your Jira username (firstname.lastname): ')
-                break
+            self.username = input(
+                instruction('Please enter your Jira username (firstname.lastname): '))
 
         if reset_keyring:
             keyring.delete_password(JIRA_URL, self.username)
@@ -116,7 +118,7 @@ class _ConfigImpl(object):
                         basic_auth=(self.username, self._jira_pwd),
                         validate=True,
                         logging=False,
-                        max_retries=0,
+                        max_retries=3,
                         timeout=5,  # I think the unit is seconds.
                     )
                     if _jira:
