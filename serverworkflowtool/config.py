@@ -21,49 +21,98 @@ import os
 import pathlib
 import pickle
 
+import jira
 import keyring
 
 
-class Config(object):
+class _Config(object):
+    instance = None
 
     # Constants
     HOME = pathlib.Path.home()
     OPT = pathlib.Path('/opt')
     CONFIG_FILE = HOME / '.config' / 'server-workflow-tool' / 'config.pickle'
 
+    JIRA_URL = 'https://jira.mongodb.org'
+
     def __init__(self):
-        self.branches = []
+        self.git_branches = []
         self.jira_user = None
         self.jira_pwd = None
 
+        self._jira = None
+
     def __getstate__(self):
-        # Remove sensitive info.
         d = self.__dict__.copy()
 
-        del d['jira_pwd']
+        # Remove sensitive and unnecessary info.
+        d['jira_pwd'] = None
+        d['_jira'] = None
+
         return d
 
     def __setstate__(self, state):
         # Restore instance attributes.
         self.__dict__.update(state)
-        self._setup_jira()
+        self._setup_jira_credentials()
 
-    def _setup_jira(self):
+    def _setup_jira_credentials(self, reset_keyring=False):
+        """
+        :param reset_keyring: set to true if the user is suspected of having
+                              entered the wrong password
+        """
         if not self.jira_user:
             while True:
                 self.jira_user = input(
                     'Please enter your Jira username (firstname.lastname): ')
-                confirm = input(
-                    'You\'ve entered "{}", press y to confirm'.format(self.jira_user))
-                if confirm == 'y':
-                    break
+                break
+
+        if reset_keyring:
+            keyring.delete_password(self.JIRA_URL, self.jira_user)
 
         if not self.jira_pwd:
-            jira_pwd = keyring.get_password('jira.mongodb.org', self.jira_user)
+            jira_pwd = keyring.get_password(self.JIRA_URL, self.jira_user)
             if not jira_pwd:
                 jira_pwd = getpass.getpass(prompt='Please enter your Jira password: ')
-            keyring.set_password('jira.mongodb.org', self.jira_user, jira_pwd)
+            keyring.set_password(self.JIRA_URL, self.jira_user, jira_pwd)
             self.jira_pwd = jira_pwd
+
+    @property
+    def jira(self):
+        """
+        lazily get a jira client.
+        """
+        if not self._jira:
+            if self.jira_user is None:
+                # Probably running the workflow tool for the first time.
+                self._setup_jira_credentials()
+
+            while True:
+                try:
+                    _jira = jira.JIRA(
+                        options={'server': self.JIRA_URL},
+                        basic_auth=(self.jira_user, self.jira_pwd),
+                        validate=True,
+                        logging=False,
+                        max_retries=0,
+                        timeout=5,  # I think the unit is seconds.
+                    )
+                    if _jira:
+                        self._jira = _jira
+                        break
+                except jira.exceptions.JIRAError as e:
+                    if e.status_code == '403' or e.status_code == 403:
+                        input('Failed to login to Jira. Please re-enter your username and '
+                              'password. If this failure persists, please open a browser and login '
+                              'to Jira. If that still doesn\'t work, seek help in #asdf')
+                        self.jira_user = None
+                        self.jira_pwd = None
+                        self._setup_jira_credentials(reset_keyring=True)
+                        # TODO: slack channel.
+                    else:
+                        raise
+
+        return self._jira
 
     def dump(self):
         try:
@@ -82,5 +131,16 @@ class Config(object):
 
     @staticmethod
     def load():
-        with open(str(Config.CONFIG_FILE), 'rb') as fh:
+        if not _Config.CONFIG_FILE.exists():
+            return _Config()
+
+        with open(str(_Config.CONFIG_FILE), 'rb') as fh:
             return pickle.load(fh)
+
+
+# Singleton _Config object
+def Config():
+    if _Config.instance is None:
+        _Config.instance = _Config.load()
+    return _Config.instance
+

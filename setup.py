@@ -29,7 +29,10 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/mongodb/server-workflow-tool",
-    packages=setuptools.find_packages(),
+    packages=[
+        'serverworkflowtool',
+        'serverworkflowtool.utils'
+    ],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3 :: Only",

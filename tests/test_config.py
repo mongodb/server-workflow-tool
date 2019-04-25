@@ -41,13 +41,13 @@ class ConfigTest(unittest.TestCase):
             Config.CONFIG_FILE = temp_file.name
 
             old_config = Config()
-            old_config.branches = ['server1', 'server2']
+            old_config.git_branches = ['server1', 'server2']
             old_config.jira_user = 'old_jira_user'
             old_config.jira_pwd = 'old_jira_pwd'
 
             old_config.dump()
 
             new_config = old_config.load()
-            self.assertListEqual(new_config.branches, old_config.branches)
+            self.assertListEqual(new_config.branches, old_config.git_branches)
             self.assertEqual(new_config.jira_user, 'new_jira_user')
             self.assertEqual(new_config.jira_pwd, 'new_jira_pwd')

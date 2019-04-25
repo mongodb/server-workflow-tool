@@ -8,6 +8,7 @@ import yaml
 from invoke import task
 
 from deprecated.utils import get_jira_pwd, print_bold
+from serverworkflowtool.config import Config
 
 jira_username = None
 jira_password = None
@@ -416,3 +417,9 @@ def open_jira(c, ticket=None):
         ticket = branch_num
 
     webbrowser.open(f'https://jira.mongodb.org/browse/{project.upper()}-{ticket}')
+
+
+@task()
+def _validate_jira(c):
+    config = Config()
+    j = config.jira

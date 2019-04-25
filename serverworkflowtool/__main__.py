@@ -16,6 +16,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import logging
 
 import pkg_resources
 
@@ -23,18 +24,21 @@ from invoke import Program, Collection
 
 from deprecated import setupenv
 from deprecated import tasks
+from serverworkflowtool.config import Config
 
 
 def run():
-    config = {
+    logging.basicConfig(level=logging.WARNING)
+
+    invoke_config = {
         'run': {
             'hide': True  # Don't print stdout or stderr.
         },
         'NINJA_STATUS': '[%f/%t (%p) %es] '  # make the ninja output even nicer
     }
 
-    ns = Collection.from_module(tasks, config=config)
-    ns.add_collection(Collection.from_module(setupenv, name='setup-dev-env', config=config))
+    ns = Collection.from_module(tasks, config=invoke_config)
+    ns.add_collection(Collection.from_module(setupenv, name='setup-dev-env', config=invoke_config))
 
     proj_info = pkg_resources.require("server_workflow_tool")[0]
 
@@ -44,7 +48,9 @@ def run():
         namespace=ns,
         version=proj_info.version)
 
+    c = Config()
     p.run()
+    c.dump()
 
 
 if __name__ == '__main__':
