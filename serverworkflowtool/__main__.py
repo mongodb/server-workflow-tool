@@ -17,19 +17,18 @@
 # specific language governing permissions and limitations
 # under the License.
 import logging
+import sys
 
 import pkg_resources
 
 from invoke import Program, Collection
 
-from deprecated import setupenv
+from serverworkflowtool import setupenv
 from deprecated import tasks
 from serverworkflowtool.config import Config
 
 
 def run():
-    logging.basicConfig(level=logging.WARNING)
-
     invoke_config = {
         'run': {
             'hide': True  # Don't print stdout or stderr.
@@ -38,7 +37,7 @@ def run():
     }
 
     ns = Collection.from_module(tasks, config=invoke_config)
-    ns.add_collection(Collection.from_module(setupenv, name='setup-dev-env', config=invoke_config))
+    ns.add_collection(Collection.from_module(setupenv, name='setup', config=invoke_config))
 
     proj_info = pkg_resources.require("server_workflow_tool")[0]
 
@@ -47,6 +46,13 @@ def run():
         name=proj_info.project_name,
         namespace=ns,
         version=proj_info.version)
+
+    p.parse_core(sys.argv[1:])
+
+    if p.args.debug.value:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     c = Config()
     p.run()

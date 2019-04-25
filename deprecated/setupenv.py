@@ -66,7 +66,7 @@ def get_passwords(c):
 
 
 @task
-def macos(c):
+def macos_old(c):
     """
     Set up MongoDB core server development environment on MacOS. Please run this task with "-w"
 

@@ -17,12 +17,14 @@
 #  specific language governing permissions and limitations
 #  under the License.
 import getpass
+import logging
 import os
 import pathlib
 import pickle
 
 import jira
 import keyring
+import invoke.exceptions
 
 
 class _ConfigImpl(object):
@@ -38,16 +40,18 @@ class _ConfigImpl(object):
     def __init__(self):
         self.git_branches = []
         self.jira_user = None
-        self.jira_pwd = None
 
+        self._jira_pwd = None
         self._jira = None
+        self._sudo_pwd = None
 
     def __getstate__(self):
         d = self.__dict__.copy()
 
         # Remove sensitive and unnecessary info.
-        d['jira_pwd'] = None
-        d['_jira'] = None
+        for k in d:
+            if k.startswith('_'):
+                d[k] = None
 
         return d
 
@@ -70,12 +74,29 @@ class _ConfigImpl(object):
         if reset_keyring:
             keyring.delete_password(self.JIRA_URL, self.jira_user)
 
-        if not self.jira_pwd:
+        if not self._jira_pwd:
             jira_pwd = keyring.get_password(self.JIRA_URL, self.jira_user)
             if not jira_pwd:
                 jira_pwd = getpass.getpass(prompt='Please enter your Jira password: ')
             keyring.set_password(self.JIRA_URL, self.jira_user, jira_pwd)
-            self.jira_pwd = jira_pwd
+            self._jira_pwd = jira_pwd
+
+    def get_sudo_pwd(self, ctx):
+        if not self._sudo_pwd:
+            while True:
+                sudo_pwd = getpass.getpass(prompt='Please enter your sudo password: ')
+
+                try:
+                    # Check if this password works
+                    ctx.sudo('ls', warn=False, hide='both', password=sudo_pwd)
+                except invoke.exceptions.AuthFailure as e:
+                    logging.error(str(e))
+                    continue
+
+                self._sudo_pwd = sudo_pwd
+                break
+
+        return self._sudo_pwd
 
     @property
     def jira(self):
@@ -91,7 +112,7 @@ class _ConfigImpl(object):
                 try:
                     _jira = jira.JIRA(
                         options={'server': self.JIRA_URL},
-                        basic_auth=(self.jira_user, self.jira_pwd),
+                        basic_auth=(self.jira_user, self._jira_pwd),
                         validate=True,
                         logging=False,
                         max_retries=0,
@@ -106,7 +127,7 @@ class _ConfigImpl(object):
                               'password. If this failure persists, please open a browser and login '
                               'to Jira. If that still doesn\'t work, seek help in #asdf')
                         self.jira_user = None
-                        self.jira_pwd = None
+                        self._jira_pwd = None
                         self._setup_jira_credentials(reset_keyring=True)
                         # TODO: slack channel.
                     else:
@@ -131,16 +152,22 @@ class _ConfigImpl(object):
 
     @staticmethod
     def load():
-        if not _ConfigImpl.CONFIG_FILE.exists():
-            return _ConfigImpl()
+        if _ConfigImpl.CONFIG_FILE.exists():
+            with open(str(_ConfigImpl.CONFIG_FILE), 'rb') as fh:
+                try:
+                    return pickle.load(fh)
+                except (EOFError, KeyError, TypeError) as e:
+                    logging.error("%s: %s", type(e), str(e))
+                    logging.error('Error reading config file at %s, using empty file as fallback',
+                                  str(_ConfigImpl.CONFIG_FILE))
 
-        with open(str(_ConfigImpl.CONFIG_FILE), 'rb') as fh:
-            return pickle.load(fh)
+        # Fallback to an empty config.
+        return _ConfigImpl()
 
 
 # Singleton _Config object
 def Config():
     if _ConfigImpl.instance is None:
         _ConfigImpl.instance = _ConfigImpl.load()
-    return _ConfigImpl.instance
 
+    return _ConfigImpl.instance
