@@ -16,38 +16,40 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-
+import pathlib
 import tempfile
 import unittest
 from unittest import mock
 
-from serverworkflowtool.config import Config
+from serverworkflowtool.config import Config, _ConfigImpl
 
 
 class ConfigTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.original_config_path = Config.CONFIG_FILE
+        self.original_config_path = Config().CONFIG_FILE
 
     def tearDown(self) -> None:
         Config.CONFIG_FILE = self.original_config_path
 
-    def mock_setup_jira(self):
+    def mock_setup_jira_credentials(self):
         self.jira_user = 'new_jira_user'
         self.jira_pwd = 'new_jira_pwd'
 
-    @mock.patch.object(Config, '_setup_jira', mock_setup_jira)
+    @mock.patch.object(_ConfigImpl, '_setup_jira_credentials', mock_setup_jira_credentials)
     def test_pickle(self):
         with tempfile.NamedTemporaryFile('wb') as temp_file:
-            Config.CONFIG_FILE = temp_file.name
+            _ConfigImpl.CONFIG_FILE = pathlib.Path(temp_file.name)
 
             old_config = Config()
             old_config.git_branches = ['server1', 'server2']
             old_config.jira_user = 'old_jira_user'
             old_config.jira_pwd = 'old_jira_pwd'
-
             old_config.dump()
 
-            new_config = old_config.load()
-            self.assertListEqual(new_config.branches, old_config.git_branches)
+            # Remove the singleton.
+            _ConfigImpl.instance = None
+
+            new_config = Config()
+            self.assertListEqual(new_config.git_branches, old_config.git_branches)
             self.assertEqual(new_config.jira_user, 'new_jira_user')
             self.assertEqual(new_config.jira_pwd, 'new_jira_pwd')

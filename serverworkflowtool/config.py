@@ -25,7 +25,7 @@ import jira
 import keyring
 
 
-class _Config(object):
+class _ConfigImpl(object):
     instance = None
 
     # Constants
@@ -131,16 +131,16 @@ class _Config(object):
 
     @staticmethod
     def load():
-        if not _Config.CONFIG_FILE.exists():
-            return _Config()
+        if not _ConfigImpl.CONFIG_FILE.exists():
+            return _ConfigImpl()
 
-        with open(str(_Config.CONFIG_FILE), 'rb') as fh:
+        with open(str(_ConfigImpl.CONFIG_FILE), 'rb') as fh:
             return pickle.load(fh)
 
 
 # Singleton _Config object
 def Config():
-    if _Config.instance is None:
-        _Config.instance = _Config.load()
-    return _Config.instance
+    if _ConfigImpl.instance is None:
+        _ConfigImpl.instance = _ConfigImpl.load()
+    return _ConfigImpl.instance
 
