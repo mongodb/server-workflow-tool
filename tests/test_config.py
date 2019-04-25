@@ -19,6 +19,7 @@
 
 import tempfile
 import unittest
+from unittest import mock
 
 from serverworkflowtool.config import Config
 
@@ -30,18 +31,23 @@ class ConfigTest(unittest.TestCase):
     def tearDown(self) -> None:
         Config.CONFIG_FILE = self.original_config_path
 
+    def mock_setup_jira(self):
+        self.jira_user = 'new_jira_user'
+        self.jira_pwd = 'new_jira_pwd'
+
+    @mock.patch.object(Config, '_setup_jira', mock_setup_jira)
     def test_pickle(self):
         with tempfile.NamedTemporaryFile('wb') as temp_file:
             Config.CONFIG_FILE = temp_file.name
 
             old_config = Config()
             old_config.branches = ['server1', 'server2']
-            old_config.jira_user = 'dummy_jira_user'
-            old_config.jira_pwd = 'dummy_jira_pwd'
+            old_config.jira_user = 'old_jira_user'
+            old_config.jira_pwd = 'old_jira_pwd'
 
             old_config.dump()
 
             new_config = old_config.load()
             self.assertListEqual(new_config.branches, old_config.branches)
-            self.assertEqual(new_config.jira_user, old_config.jira_user)
-            self.assertEqual(new_config.jira_pwd, None)
+            self.assertEqual(new_config.jira_user, 'new_jira_user')
+            self.assertEqual(new_config.jira_pwd, 'new_jira_pwd')
