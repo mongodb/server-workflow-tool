@@ -43,17 +43,17 @@ class _ConfigImpl(object):
     def __init__(self):
         self.git_branches = []
 
-        self.jira_user = None
-        self.jira_pwd = None
+        self.username = None
 
         self._jira = None
+        self._jira_pwd = None
         self._sudo_pwd = None
 
     def __getstate__(self):
         d = self.__dict__.copy()
 
         # Remove sensitive and unnecessary info.
-        d['jira_pwd'] = None
+        d['_jira_pwd'] = None
         d['_jira'] = None
         d['_sudo_pwd'] = None
 
@@ -68,21 +68,21 @@ class _ConfigImpl(object):
         :param reset_keyring: set to true if the user is suspected of having
                               entered the wrong password
         """
-        if not self.jira_user:
+        if not self.username:
             while True:
-                self.jira_user = input(
+                self.username = input(
                     'Please enter your Jira username (firstname.lastname): ')
                 break
 
         if reset_keyring:
-            keyring.delete_password(JIRA_URL, self.jira_user)
+            keyring.delete_password(JIRA_URL, self.username)
 
-        if not self.jira_pwd:
-            jira_pwd = keyring.get_password(JIRA_URL, self.jira_user)
+        if not self._jira_pwd:
+            jira_pwd = keyring.get_password(JIRA_URL, self.username)
             if not jira_pwd:
                 jira_pwd = getpass.getpass(prompt='Please enter your Jira password: ')
-            keyring.set_password(JIRA_URL, self.jira_user, jira_pwd)
-            self.jira_pwd = jira_pwd
+            keyring.set_password(JIRA_URL, self.username, jira_pwd)
+            self._jira_pwd = jira_pwd
 
     def get_sudo_pwd(self, ctx):
         if not self._sudo_pwd:
@@ -113,7 +113,7 @@ class _ConfigImpl(object):
                 try:
                     _jira = jira.JIRA(
                         options={'server': JIRA_URL},
-                        basic_auth=(self.jira_user, self.jira_pwd),
+                        basic_auth=(self.username, self._jira_pwd),
                         validate=True,
                         logging=False,
                         max_retries=0,
@@ -128,8 +128,8 @@ class _ConfigImpl(object):
                         'If the failure persists, please login to Jira manually in a browser. '
                         'If that still doesn\'t work, seek help in #asdf')
                     get_logger().debug(e)
-                    self.jira_user = None
-                    self.jira_pwd = None
+                    self.username = None
+                    self._jira_pwd = None
                     self._setup_jira_credentials(reset_keyring=True)
                     # TODO: slack channel.
 
