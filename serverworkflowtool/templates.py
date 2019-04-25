@@ -16,32 +16,18 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-import logging
-import sys
 
+evergreen_yaml_template = \
+    '''
+user: "{}"
+api_key: "{}"
+api_server_host: "https://evergreen.mongodb.com/api"
+ui_server_host: "https://evergreen.mongodb.com"
 
-def singleton(cls):
-    instances = {}
-
-    def getinstance():
-        if cls not in instances:
-            instances[cls] = cls()
-        return instances[cls]
-    return getinstance
-
-
-_logger = None
-
-
-def get_logger(level=None):
-    global _logger
-
-    if not _logger:
-        logger = logging.getLogger('workflow')
-        logger.setLevel(level)
-        formatter = logging.Formatter('[%(levelname)s] %(message)s')
-        stdout = logging.StreamHandler(sys.stdout)
-        stdout.setFormatter(formatter)
-        logger.addHandler(stdout)
-        _logger = logger
-    return _logger
+projects:
+- name: mongodb-mongo-master
+  default: true
+  alias: required
+  tasks:
+  - all
+    '''

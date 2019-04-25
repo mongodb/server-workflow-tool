@@ -26,6 +26,7 @@ from invoke import Program, Collection
 from serverworkflowtool import setupenv
 from deprecated import tasks
 from serverworkflowtool.config import Config
+from serverworkflowtool.utils import get_logger
 
 
 def run():
@@ -50,9 +51,9 @@ def run():
     p.parse_core(sys.argv[1:])
 
     if p.args.debug.value:
-        logging.basicConfig(level=logging.DEBUG)
+        get_logger(level=logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
+        get_logger(level=logging.INFO)
 
     c = Config()
     p.run()
