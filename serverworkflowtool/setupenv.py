@@ -17,7 +17,7 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-import getpass
+import os
 import pathlib
 import webbrowser
 
@@ -26,6 +26,7 @@ import requests
 from invoke import task
 
 from serverworkflowtool import config
+from serverworkflowtool.config import DownloadConfig
 from serverworkflowtool.templates import evergreen_yaml_template
 from serverworkflowtool.utils import get_logger, instruction, log_func, log_err_res
 
@@ -89,17 +90,20 @@ def clone_repos(ctx):
 
     with ctx.cd(str(repo_parent_dir)):
         for repo_config in config.REQUIRED_REPOS:
-            repo_dir = repo_parent_dir / repo_config.local
+            repo_dir = repo_parent_dir / repo_config.relative_local
             if repo_dir.exists():
                 get_logger().warning(
                     'Local directory %s exists. If you\'d like to re-clone,'
                     'please delete this directory first', str(repo_dir))
             else:
-                cmd = f'git clone {repo_config.remote} {repo_config.local}'
+                cmd = f'git clone {repo_config.remote} {repo_dir}'
+                get_logger().info(cmd)
                 res = ctx.run(cmd, hide=False)
                 log_err_res(res)
 
                 res_ok = res and res_ok
+
+    return res_ok
 
 
 def create_dir(ctx, conf, dir_absolute):
@@ -121,6 +125,59 @@ def create_dir(ctx, conf, dir_absolute):
         return False
 
 
+def _do_download(ctx, download_config):
+    with ctx.cd(str(config.HOME)):
+        local_path = config.HOME / download_config.relative_local
+        if local_path.exists():
+            get_logger().warning('Local file %s exists. If you\'d like to re-download this '
+                                 'file, please delete the local copy first.', local_path)
+            return True
+        else:
+            cmd = f'curl -o {download_config.relative_local} {download_config.remote}'
+            get_logger().info(cmd)
+            res = ctx.run(cmd)
+            log_err_res(res)
+            return res.ok
+
+
+def download_clang_format(ctx):
+    bin_dir = config.HOME / 'bin'
+
+    if (bin_dir / 'clang-format').exists():
+        get_logger().warning('File %s already exists. Skipping installing clang-format',
+                             str(bin_dir / 'clang-format'))
+        return True
+
+    dc = DownloadConfig(
+        'https://s3.amazonaws.com/boxes.10gen.com/build/clang%2Bllvm-3.8.0-x86_64-apple-darwin.tar.xz',
+        relative_local='bin/llvm3.8.0.tar.xz'
+    )
+
+    _do_download(ctx, dc)
+
+    with ctx.cd(str(bin_dir)):
+        ugly_name = 'clang+llvm-3.8.0-x86_64-apple-darwin'
+        pretty_name = 'llvm-3.8.0'
+
+        if not (bin_dir / pretty_name).exists():
+            res1 = ctx.run('tar -xvzf llvm3.8.0.tar.xz')
+            log_err_res(res1)
+
+            res2 = ctx.run(f'mv {ugly_name} {pretty_name}')
+            log_err_res(res2)
+        else:
+            get_logger().warning('Directory %s exists. Skipping extracting llvm', str(bin_dir / pretty_name))
+
+        # softlink clang-format to a convenient location.
+        res3 = ctx.run(f'ln -s {str(bin_dir / pretty_name / "bin" / "clang-format")} clang-format')
+        log_err_res(res3)
+        return res3.ok
+
+
+def download_evergreen(ctx):
+    pass
+
+
 @task
 def macos(ctx):
     conf = config.Config()
@@ -134,8 +191,9 @@ def macos(ctx):
 
         # Then do the automated tasks that don't require user interaction.
         (lambda: evergreen_yaml(conf), 'Configure Evergeen'),
-        (lambda: clone_repos(ctx), 'Clone MongoDB Repositories')
-
+        (lambda: clone_repos(ctx), 'Clone MongoDB Repositories'),
+        (lambda: download_clang_format(ctx), 'Download clang-format'),
+        (lambda: download_evergreen(ctx), 'Download evergreen CLI')
 
         # githooks
         # toolchain

@@ -41,18 +41,33 @@ GITHUB_SSH_HELP_URL = ('https://help.github.com/articles/'
                        'generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac')
 
 
-class RepoConfig:
-    def __init__(self, remote, local):
+class DownloadConfig:
+    """
+    Config for any downloadable items.
+    """
+    def __init__(self, remote, relative_local=None, absolute_local=None):
         self.remote = remote
 
-        # Local path relative to CWD.
-        self.local = local
+        # Only need one of the following.
+        self.relative_local = relative_local
+        self.absolute_local = absolute_local
 
 
+# Paths are relative to root dir of all repos.
 REQUIRED_REPOS = [
-    RepoConfig('git@github.com:mongodb/mongo.git', 'mongo'),
-    RepoConfig('git@github.com:10gen/mongo-enterprise-modules', 'mongo/src/mongo/db/modules/'),
-    RepoConfig('git@github.com:10gen/kernel-tools.git', 'kernel-tools')
+    DownloadConfig('git@github.com:mongodb/mongo.git', relative_local='mongo'),
+    DownloadConfig('git@github.com:10gen/mongo-enterprise-modules',
+                   relative_local='mongo/src/mongo/db/modules/enterprise'),
+    DownloadConfig('git@github.com:10gen/kernel-tools.git', relative_local='kernel-tools')
+]
+
+# Paths are relative to HOME
+REQUIRED_BINARIES = [
+
+    DownloadConfig(
+        'https://evergreen.mongodb.com/clients/darwin_amd64/evergreen',
+        relative_local='bin/evergreen'
+    )
 ]
 
 
