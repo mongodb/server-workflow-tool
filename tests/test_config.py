@@ -39,11 +39,6 @@ class ConfigTest(unittest.TestCase):
     def tearDown(self) -> None:
         config.CONFIG_FILE = self.original_config_path
 
-    def mock_setup_jira_credentials(self):
-        self.jira_user = 'new_jira_user'
-        self.jira_pwd = 'new_jira_pwd'
-
-    @mock.patch.object(config._ConfigImpl, '_setup_jira_credentials', mock_setup_jira_credentials)
     def test_pickle(self):
         with tempfile.TemporaryDirectory('wb') as temp_dir:
             temp_file = os.path.join(temp_dir, 'config.pickle')
@@ -52,7 +47,7 @@ class ConfigTest(unittest.TestCase):
             old_config = config.Config()
 
             old_config.git_branches = ['server1', 'server2']
-            old_config.username = 'dummy_user'
+            old_config._username = 'dummy_user'
             old_config._jira_pwd = 'old_jira_pwd'
             old_config._sudo_pwd = 'old_sudo_pwd'
             old_config.dump()

@@ -40,8 +40,33 @@ GITHUB_SSH_HELP_URL = ('https://help.github.com/articles/'
                        'generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac')
 
 
+class RepoConfig:
+    def __init__(self, remote, local):
+        self.remote = remote
+        self.local = local
+
+
+REQUIRED_REPOS = [
+    RepoConfig('git@github.com:mongodb/mongo.git', 'mongo'),
+    RepoConfig('git@github.com:10gen/mongo-enterprise-modules', 'mongo/src/mongo/db/modules/'),
+    RepoConfig('git@github.com:10gen/kernel-tools.git', 'kernel-tools')
+]
+
+
 class _ConfigImpl(object):
     instance = None
+
+    def __init__(self):
+        """
+        Please make sure you copy all instance attributes defined in __init__ to __setstate__.
+        """
+        self.git_branches = []
+
+        self._username = None
+
+        self._jira = None
+        self._jira_pwd = None
+        self._sudo_pwd = None
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -58,7 +83,7 @@ class _ConfigImpl(object):
         # because pickle will not add ones from __init__ to __dict__
         self.git_branches = []
 
-        self.username = None
+        self._username = None
 
         self._jira = None
         self._jira_pwd = None
@@ -67,24 +92,17 @@ class _ConfigImpl(object):
         # Restore instance attributes.
         self.__dict__.update(state)
 
-    def _setup_jira_credentials(self, reset_keyring=False):
+    def reset_jira_credentials(self):
         """
-        :param reset_keyring: set to true if the user is suspected of having
-                              entered the wrong password
+        Reset Jira credentials; for when the user accidentally entered the wrong information.
+        :return:
         """
-        if not self.username:
-            self.username = input(
-                instruction('Please enter your Jira username (firstname.lastname): '))
-
-        if reset_keyring:
+        if self.username is not None:
+            self._username = None
+            self._jira_pwd = None
             keyring.delete_password(JIRA_URL, self.username)
-
-        if not self._jira_pwd:
-            jira_pwd = keyring.get_password(JIRA_URL, self.username)
-            if not jira_pwd:
-                jira_pwd = getpass.getpass(prompt='Please enter your Jira password: ')
-            keyring.set_password(JIRA_URL, self.username, jira_pwd)
-            self._jira_pwd = jira_pwd
+        else:
+            get_logger().warning('Attempting to delete Jira password without a username')
 
     def get_sudo_pwd(self, ctx):
         if not self._sudo_pwd:
@@ -104,18 +122,33 @@ class _ConfigImpl(object):
         return self._sudo_pwd
 
     @property
+    def jira_pwd(self):
+        if not self._jira_pwd:
+            jira_pwd = keyring.get_password(JIRA_URL, self.username)
+            if not jira_pwd:
+                jira_pwd = getpass.getpass(prompt=instruction('Please enter your Jira password: '))
+            keyring.set_password(JIRA_URL, self.username, jira_pwd)
+            self._jira_pwd = jira_pwd
+        return self._jira_pwd
+
+    @property
+    def username(self):
+        if not self._username:
+            self._username = input(
+                instruction('Please enter your Jira username (firstname.lastname): '))
+        return self._username
+
+    @property
     def jira(self):
         """
         lazily get a jira client.
         """
         if not self._jira:
-            self._setup_jira_credentials()
-
             while True:
                 try:
                     _jira = jira.JIRA(
                         options={'server': JIRA_URL},
-                        basic_auth=(self.username, self._jira_pwd),
+                        basic_auth=(self.username, self.jira_pwd),
                         validate=True,
                         logging=False,
                         max_retries=3,
@@ -130,19 +163,13 @@ class _ConfigImpl(object):
                         'If the failure persists, please login to Jira manually in a browser. '
                         'If that still doesn\'t work, seek help in #asdf')
                     get_logger().debug(e)
-                    self.username = None
-                    self._jira_pwd = None
-                    self._setup_jira_credentials(reset_keyring=True)
+                    self.reset_jira_credentials()
                     # TODO: slack channel.
 
         return self._jira
 
     def dump(self):
-        try:
-            os.mkdir(os.path.dirname(str(CONFIG_FILE)))
-        except FileExistsError:
-            # Directory exists.
-            pass
+        CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
 
         with open(str(CONFIG_FILE), 'wb') as fh:
             pickle.dump(

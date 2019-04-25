@@ -42,7 +42,8 @@ setuptools.setup(
         'jira == 2.0.0',
         'keyring == 19.0.1',
         'invoke == 1.2.0',
-        'pyyaml == 5.1'
+        'pyyaml == 5.1',
+        'requests == 2.21.0'
     ],
     entry_points={
         'console_scripts': ['workflow = serverworkflowtool.__main__:run'],

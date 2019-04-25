@@ -48,8 +48,16 @@ def get_logger(level=None):
 
 
 def instruction(msg):
+    """
+    Make instructions to actionable items green so they stand out from generic logging.
+    """
     return f'\033[92m{msg}\033[0m'
 
 
-def bold(msg):
-    return f'\n\033[1m{msg}\033[0m'
+def log_func(func, human_name):
+    grey = lambda msg: f'\033[90m{msg}\033[0m'
+    get_logger().info(grey('    ----- Starting Task: %s -----'), human_name)
+    func()
+    get_logger().info(grey('    ----- Finished Task: %s -----'), human_name)
+    get_logger().info('')
+    get_logger().info('')

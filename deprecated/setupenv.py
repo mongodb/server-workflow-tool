@@ -38,14 +38,7 @@ kEvgConfigPath = pathlib.Path.home() / '.evergreen.yml'
 # GitHub constants
 kGitHubAddSSHHelpURL = ('https://help.github.com/articles/'
                         'generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac')
-kRepositories = [
-    {'source_loc': 'git@github.com:mongodb/mongo.git',
-     'target_loc': 'mongo'},
-    {'source_loc': 'git@github.com:10gen/mongo-enterprise-modules',
-     'target_loc': 'mongo/src/mongo/db/modules/'},
-    {'source_loc': 'git@github.com:10gen/kernel-tools.git',
-     'target_loc': 'kernel-tools'}
-]
+
 # Runtime configuration
 jira_username = None
 jira_password = None
