@@ -11,11 +11,11 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/mongodb/server-workflow-tool",
     packages=setuptools.find_packages(),
-    classifiers=(
+    classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3 :: Only",
         "License :: OSI Approved :: Apache Software License",
-    ),
+    ],
     install_requires=[
         'jira == 2.0.0',
         'keyring == 19.0.1',
@@ -23,6 +23,6 @@ setuptools.setup(
         'pyyaml == 5.1'
     ],
     entry_points={
-        'console_scripts': ['workflow = mongodb_cmdline_tool.__main__:main'],
+        'console_scripts': ['workflow = serverworkflowtool.__main__:run'],
     }
 )

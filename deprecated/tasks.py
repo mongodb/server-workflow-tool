@@ -1,4 +1,3 @@
-import os
 import pathlib
 import re
 import sys
@@ -8,7 +7,7 @@ import jira
 import yaml
 from invoke import task
 
-from mongodb_cmdline_tool.utils import get_jira_pwd, print_bold
+from deprecated.utils import get_jira_pwd, print_bold
 
 jira_username = None
 jira_password = None

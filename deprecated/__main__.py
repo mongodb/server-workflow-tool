@@ -2,8 +2,8 @@
 
 from invoke import Program, Collection
 
-from mongodb_cmdline_tool import setupenv
-from mongodb_cmdline_tool import tasks
+from deprecated import setupenv
+from deprecated import tasks
 
 
 def main():
