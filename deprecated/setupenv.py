@@ -13,7 +13,7 @@ from deprecated.utils import print_bold, format_bold, get_jira_pwd, save_jira_pw
 
 # Global Constants.
 kHome = pathlib.Path.home()
-kOptDir = pathlib.Path('/opt')
+
 kDownloadsCache = pathlib.Path(tempfile.mkdtemp())
 kPackageDir = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 kConfigDir = kHome / '.config'

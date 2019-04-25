@@ -18,24 +18,43 @@
 #  under the License.
 
 import os
+import pathlib
 import pickle
 
 
 class Config(object):
-    config_file = os.path.join(os.path.expanduser('~'), '.config', 'server-workflow-tool',
-                               'config.pickle')
+
+    # Constants
+    HOME = pathlib.Path.home()
+    OPT = pathlib.Path('/opt')
+    CONFIG_FILE = HOME / '.config' / 'server-workflow-tool' / 'config.pickle'
 
     def __init__(self):
         self.branches = []
+        self.jira_user = None
+        self.jira_pwd = None
+
+    def __getstate__(self):
+        # Remove sensitive info.
+        d = self.__dict__.copy()
+
+        del d['jira_pwd']
+        return d
+
+    def __setstate__(self, state):
+        # Restore instance attributes.
+        self.__dict__.update(state)
+
+        self.jira_pwd = None
 
     def dump(self):
         try:
-            os.mkdir(os.path.dirname(self.config_file))
+            os.mkdir(os.path.dirname(self.CONFIG_FILE))
         except FileExistsError:
             # Directory exists.
             pass
 
-        with open(self.config_file, 'wb') as fh:
+        with open(self.CONFIG_FILE, 'wb') as fh:
             pickle.dump(
                 self,
                 fh,
@@ -45,5 +64,5 @@ class Config(object):
 
     @staticmethod
     def load():
-        with open(Config.config_file, 'rb') as fh:
+        with open(Config.CONFIG_FILE, 'rb') as fh:
             return pickle.load(fh)
