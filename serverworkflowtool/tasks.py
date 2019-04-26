@@ -16,3 +16,21 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
+from invoke import task
+
+from serverworkflowtool.utils import get_logger
+
+
+@task(positional=['ticket_number'], optional=['branch', 'project'])
+def new(ctx, ticket_number, project='server'):
+    """
+    Step 1: Create or switch to the branch for a ticket.
+
+    :param ticket_number: Digits of the Jira ticket.
+    :param project: Jira project. Default: server.
+    """
+    try:
+        ticket_number = int(ticket_number)
+    except ValueError:
+        get_logger().critical('Ticket number must be an integer, got "%"', ticket_number)
+        return 1

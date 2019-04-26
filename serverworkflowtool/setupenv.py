@@ -287,6 +287,7 @@ def macos(ctx):
 
         # TODO: upload.py
         # TODO: generate compile db
+        # TODO: post install steps
     ]
 
     for func in funcs:

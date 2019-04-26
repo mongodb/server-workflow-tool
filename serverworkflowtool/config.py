@@ -70,6 +70,15 @@ REQUIRED_REPOS = [
 ]
 
 
+class TicketConfig(object):
+    def __init__(self, project, number, base_commit):
+        self.project = project
+        self.number = number
+        self.base_commit = base_commit
+        self.cr_ids = []
+        self.patches_ids = []
+
+
 class _ConfigImpl(object):
     instance = None
 
@@ -77,7 +86,7 @@ class _ConfigImpl(object):
         """
         Please make sure you copy all instance attributes defined in __init__ to __setstate__.
         """
-        self.git_branches = []
+        self.in_progress_tickets = []
 
         self._username = None
 
@@ -178,10 +187,9 @@ class _ConfigImpl(object):
                     get_logger().warning(
                         'Failed to login to Jira. Please re-enter your username and password. '
                         'If the failure persists, please login to Jira manually in a browser. '
-                        'If that still doesn\'t work, seek help in #asdf')
+                        'If that still doesn\'t work, seek help in #new-server-eng-help')
                     get_logger().debug(e)
                     self.reset_jira_credentials()
-                    # TODO: slack channel.
 
         return self._jira
 
