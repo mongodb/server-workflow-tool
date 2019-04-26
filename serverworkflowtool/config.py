@@ -17,7 +17,6 @@
 #  specific language governing permissions and limitations
 #  under the License.
 import getpass
-import os
 import pathlib
 import pickle
 
@@ -63,7 +62,10 @@ REQUIRED_REPOS = [
     DownloadConfig('git@github.com:mongodb/mongo.git', relative_local='mongo'),
     DownloadConfig('git@github.com:10gen/mongo-enterprise-modules',
                    relative_local='mongo/src/mongo/db/modules/enterprise'),
-    DownloadConfig('git@github.com:10gen/kernel-tools.git', relative_local='kernel-tools')
+    DownloadConfig('git@github.com:RedBeard0531/mongo_module_ninja.git',
+                   relative_local='mongo/src/mongo/db/modules/ninja'),
+    DownloadConfig('git@github.com:10gen/kernel-tools.git', relative_local='kernel-tools'),
+    DownloadConfig('git@github.com:10gen/employees.git', relative_local='scratch')
 ]
 
 
@@ -183,7 +185,7 @@ class _ConfigImpl(object):
         return self._jira
 
     def dump(self):
-        CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
         with open(str(CONFIG_FILE), 'wb') as fh:
             pickle.dump(

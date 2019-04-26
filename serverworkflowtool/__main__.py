@@ -23,8 +23,7 @@ import pkg_resources
 
 from invoke import Program, Collection
 
-from serverworkflowtool import setupenv
-from deprecated import tasks
+from serverworkflowtool import setupenv, tasks
 from serverworkflowtool.config import Config
 from serverworkflowtool.utils import get_logger
 

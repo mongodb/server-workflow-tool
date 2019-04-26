@@ -18,16 +18,17 @@
 #  under the License.
 
 import pathlib
+import sys
 import webbrowser
 
 import requests
 
-from invoke import task
+from invoke import task, UnexpectedExit
 
 from serverworkflowtool import config
 from serverworkflowtool.config import DownloadConfig
 from serverworkflowtool.templates import evergreen_yaml_template, shell_profile_template
-from serverworkflowtool.utils import get_logger, instruction, log_func, log_err_res
+from serverworkflowtool.utils import get_logger, instruction, log_func
 
 
 def evergreen_yaml(conf):
@@ -57,34 +58,39 @@ def evergreen_yaml(conf):
     return True
 
 
-def ssh_keys():
+def ssh_keys(ctx):
+    ssh_dir = config.HOME / '.ssh'
+    ssh_dir.mkdir(exist_ok=True)
+
     if config.SSH_KEY_FILE.is_file():
         get_logger().info('Found existing key ~/.ssh/id_rsa, skipping setting up ssh keys')
         get_logger().info('Please ensure your keys are added to your GitHub account')
-        return True
+        return
+    else:
+        get_logger().info('Did not find existing ssh key in ~/.ssh/id_rsa')
+
+    with open(ssh_dir / 'config', 'w') as fh:
+        get_logger().info('Disabling host key checking for github.com in %s',
+                          str(ssh_dir / 'config'))
+        fh.write('Host github.com\n\tStrictHostKeyChecking no\n')
 
     res = input(instruction('Opening browser for instructions to setting up ssh keys in GitHub, '
                             'press any key to continue, enter "skip" to skip: '))
+
     if res != 'skip':
         webbrowser.open(config.GITHUB_SSH_HELP_URL)
-        input(
-            'Once you\'ve generated SSH keys and added them to GitHub, press any key to continue')
+        # TODO: fix name
+        get_logger().info(instruction('Once you\'ve generated SSH keys and added them to GitHub, '
+                                      'please rerun `workflow setup.macos`'))
+        sys.exit(0)
+
     else:
         get_logger().info('Skipping adding SSH Keys to GitHub')
-
-    while not (config.SSH_KEY_FILE.is_file()):
-        get_logger().error(
-            str(config.SSH_KEY_FILE) + ' is not a file, please double check you have completed '
-                                       'GitHub\'s guide on setting up SSH keys')
-
-    return True
 
 
 def clone_repos(ctx):
     config.REPO_ROOT.mkdir(exist_ok=True)
     get_logger().info('Placing MongoDB Git repositories in %s', config.REPO_ROOT)
-
-    res_ok = True
 
     with ctx.cd(str(config.REPO_ROOT)):
         for repo_config in config.REQUIRED_REPOS:
@@ -96,12 +102,7 @@ def clone_repos(ctx):
             else:
                 cmd = f'git clone {repo_config.remote} {repo_dir}'
                 get_logger().info(cmd)
-                res = ctx.run(cmd, hide=False)
-                log_err_res(res)
-
-                res_ok = res and res_ok
-
-    return res_ok
+                ctx.run(cmd, hide=False)
 
 
 def create_dir(ctx, conf, dir_absolute):
@@ -111,16 +112,10 @@ def create_dir(ctx, conf, dir_absolute):
         return True
 
     # Need Invoke for sudo. Can't use native Python mkdir().
-    res1 = ctx.sudo(f'mkdir -p {d}', warn=False, password=conf.get_sudo_pwd(ctx))
-    res2 = ctx.sudo(f'chown {config.USER} {d}', warn=False, password=conf.get_sudo_pwd(ctx))
+    ctx.sudo(f'mkdir -p {d}', warn=False, password=conf.get_sudo_pwd(ctx))
+    ctx.sudo(f'chown {config.USER} {d}', warn=False, password=conf.get_sudo_pwd(ctx))
 
-    if res1 and res2:
-        get_logger().info(f'Created directory {d}')
-        return True
-    else:
-        log_err_res(res1)
-        log_err_res(res2)
-        return False
+    get_logger().info(f'Created directory {d}')
 
 
 def _do_download(ctx, download_config):
@@ -129,13 +124,10 @@ def _do_download(ctx, download_config):
         if local_path.exists():
             get_logger().warning('Local file %s exists. If you\'d like to re-download this '
                                  'file, please delete the local copy first.', local_path)
-            return True
         else:
             cmd = f'curl -o {download_config.relative_local} {download_config.remote}'
             get_logger().info(cmd)
-            res = ctx.run(cmd)
-            log_err_res(res)
-            return res.ok
+            ctx.run(cmd)
 
 
 def download_clang_format(ctx):
@@ -158,18 +150,14 @@ def download_clang_format(ctx):
         pretty_name = 'llvm-3.8.0'
 
         if not (bin_dir / pretty_name).exists():
-            res1 = ctx.run('tar -xvzf llvm3.8.0.tar.xz')
-            log_err_res(res1)
+            ctx.run('tar -xvzf llvm3.8.0.tar.xz')
 
-            res2 = ctx.run(f'mv {ugly_name} {pretty_name}')
-            log_err_res(res2)
+            ctx.run(f'mv {ugly_name} {pretty_name}')
         else:
             get_logger().warning('Directory %s exists. Skipping extracting llvm', str(bin_dir / pretty_name))
 
         # softlink clang-format to a convenient location.
-        res3 = ctx.run(f'ln -s {str(bin_dir / pretty_name / "bin" / "clang-format")} clang-format')
-        log_err_res(res3)
-        return res3.ok
+        ctx.run(f'ln -s {str(bin_dir / pretty_name / "bin" / "clang-format")} clang-format')
 
 
 def download_evergreen(ctx):
@@ -188,10 +176,7 @@ def download_evergreen(ctx):
 
     with ctx.cd(str(bin_dir)):
         # chmod is cheap enough that we'll just always do it instead of checking if it's already done.
-        res = ctx.run('chmod +x evergreen')
-        log_err_res(res)
-
-        return res.ok
+        ctx.run('chmod +x evergreen')
 
 
 def install_githooks(ctx):
@@ -204,33 +189,26 @@ def install_githooks(ctx):
     hooks_dir.mkdir(exist_ok=True, parents=True)
 
     if not (hooks_dir / 'mongo').exists():
-        res1 = ctx.run(f'ln -s {str(kernel_tools_dir / "githooks")} {str(hooks_dir / "mongo")}')
-        log_err_res(res1)
+        ctx.run(f'ln -s {str(kernel_tools_dir / "githooks")} {str(hooks_dir / "mongo")}')
 
     with ctx.cd(str(mongo_dir)):
-        res2 = ctx.run(f'source buildscripts/install-hooks -f')
-        log_err_res(res2)
+        ctx.run(f'source buildscripts/install-hooks -f')
 
         todo = instruction('TODO:')
         get_logger().info(f'{todo} Please consult with your mentor on which githooks are needed. '
                           'Some hooks may be unnecessarily cumbersome for your project.')
-        get_logger().info('      You can delete any unneeded hooks from `%s` and rerun this script',
+        get_logger().info('      You can delete any unneeded hooks in `%s` and rerun this script',
                           str(kernel_tools_dir / "githooks" / "pre-push"))
-
-        return res2.ok
 
 
 def setup_mongo_repo_python(ctx):
     mongo_dir = config.REPO_ROOT / 'mongo'
     python3_venv_dir = 'python3-venv'
-    res_list = []
 
     def run_cmds(cmds):
         for cmd in cmds:
             res = ctx.run(cmd)
             get_logger().info('Ran cmd: %s', res.command)
-            log_err_res(res)
-            res_list.append(res)
 
     with ctx.cd(str(mongo_dir)):
         if not (mongo_dir / python3_venv_dir).exists():
@@ -254,24 +232,26 @@ def setup_mongo_repo_python(ctx):
 
 
 def install_ninja(ctx):
-    res = ctx.run('brew install ninja')
-    log_err_res(res)
-    return res.ok
+    try:
+        ctx.run('ninja --version')
+    except UnexpectedExit:
+        ctx.run('brew install ninja')
+    else:
+        get_logger().warning('ninja appears to be already installed, skipping installing it again')
 
 
 def install_shell_profile(ctx):
+    config.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     profile = config.CONFIG_DIR / 'profile'
     with open(profile,  'w') as fh:
         fh.write(shell_profile_template)
 
     todo = instruction('TODO:')
     get_logger().info(f'{todo} Please add the following line to your shell config file, if you haven\'t already ')
-    get_logger().info('      done so. The default shell config file is ~/.bashrc for bash. If you\'re using a')
-    get_logger().info('      different shell, e.g. zsh, you would have a different config file, e.g. ~/.zshrc')
+    get_logger().info('      done so. The default shell config file is ~/.profile. If you\'re using a')
+    get_logger().info('      different shell, e.g. zsh, you may have a different config file, e.g. ~/.zshrc')
     get_logger().info('')
     get_logger().info(instruction('      source %s'), str(profile))
-
-    return True
 
 
 @task
@@ -286,7 +266,7 @@ def macos(ctx):
 
     funcs = [
         # Do tasks that require user interaction first.
-        (lambda: ssh_keys(), 'Configure SSH Keys'),
+        (lambda: ssh_keys(ctx), 'Configure SSH Keys'),
         (lambda: create_dir(ctx, conf, '/data'), 'Create MongoDB Data Directory'),
         (lambda: create_dir(ctx, conf, '/opt/mongodbtoolchain'), 'Create MongoDB Toolchain Directory'),
         (lambda: create_dir(ctx, conf, str(config.HOME / 'bin')), 'Create User bin Directory'),
@@ -297,6 +277,8 @@ def macos(ctx):
         (lambda: download_clang_format(ctx), 'Download clang-format'),
         (lambda: download_evergreen(ctx), 'Download evergreen CLI'),
         (lambda: install_ninja(ctx), 'Install ninja'),
+
+        # Next do mongo repo setup. These tasks require the system setup steps above to have run.
         (lambda: setup_mongo_repo_python(ctx), 'Setup Python Dependencies for the mongo Repository'),
 
         # Do tasks that require followup work last.

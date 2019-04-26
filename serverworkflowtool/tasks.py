@@ -17,23 +17,3 @@
 #  specific language governing permissions and limitations
 #  under the License.
 
-evergreen_yaml_template = \
-    '''
-user: "{}"
-api_key: "{}"
-api_server_host: "https://evergreen.mongodb.com/api"
-ui_server_host: "https://evergreen.mongodb.com"
-
-projects:
-- name: mongodb-mongo-master
-  default: true
-  alias: required
-  tasks:
-  - all
-    '''
-
-shell_profile_template = \
-    '''
-export PATH="$HOME/bin:$PATH"
-alias m=workflow  # Give the workflow tool a shorter name.
-    '''

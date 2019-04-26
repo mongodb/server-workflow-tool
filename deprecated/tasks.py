@@ -7,7 +7,6 @@ import jira
 import yaml
 from invoke import task
 
-from deprecated.utils import get_jira_pwd, print_bold
 from serverworkflowtool.config import Config
 
 jira_username = None

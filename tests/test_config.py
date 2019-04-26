@@ -22,7 +22,6 @@ import os.path
 import pathlib
 import tempfile
 import unittest
-from unittest import mock
 
 import serverworkflowtool.config as config
 from serverworkflowtool.utils import get_logger
