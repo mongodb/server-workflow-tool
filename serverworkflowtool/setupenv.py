@@ -243,7 +243,7 @@ def install_ninja(ctx):
 def install_shell_profile(ctx):
     config.CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     profile = config.CONFIG_DIR / 'profile'
-    with open(profile,  'w') as fh:
+    with open(profile, 'w') as fh:
         fh.write(shell_profile_template)
 
     todo = instruction('TODO:')

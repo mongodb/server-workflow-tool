@@ -49,6 +49,7 @@ class DownloadConfig:
     """
     Config for any downloadable items.
     """
+
     def __init__(self, remote, relative_local=None, absolute_local=None):
         self.remote = remote
 
