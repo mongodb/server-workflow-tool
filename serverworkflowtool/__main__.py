@@ -23,9 +23,10 @@ import pkg_resources
 
 from invoke import Program, Collection
 
-from serverworkflowtool import setupenv, tasks
+from serverworkflowtool import setupenv, tasks, helpers
 from serverworkflowtool.config import Config
-from serverworkflowtool.utils import get_logger
+from serverworkflowtool.utils import InvalidConfigError, RequireUserInputError
+from serverworkflowtool.utils.log import get_logger
 
 
 def run():
@@ -38,6 +39,7 @@ def run():
 
     ns = Collection.from_module(tasks, config=invoke_config)
     ns.add_collection(Collection.from_module(setupenv, name='setup', config=invoke_config))
+    ns.add_collection(Collection.from_module(helpers, name='helpers', config=invoke_config))
 
     proj_info = pkg_resources.require("server_workflow_tool")[0]
 
@@ -55,8 +57,13 @@ def run():
         get_logger(level=logging.INFO)
 
     c = Config()
-    p.run()
-    c.dump()
+    try:
+        p.run()
+    except (InvalidConfigError, RequireUserInputError):
+        # These errors are not actionable right now.
+        sys.exit(1)
+    finally:
+        c.dump()
 
 
 if __name__ == '__main__':

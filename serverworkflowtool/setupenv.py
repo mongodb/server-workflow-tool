@@ -28,7 +28,7 @@ from invoke import task, UnexpectedExit
 from serverworkflowtool import config
 from serverworkflowtool.config import DownloadConfig
 from serverworkflowtool.templates import evergreen_yaml_template, shell_profile_template
-from serverworkflowtool.utils import get_logger, instruction, log_func
+from serverworkflowtool.utils.log import get_logger, actionable, log_func, log_multiline, req_input
 
 
 def evergreen_yaml(conf):
@@ -45,7 +45,8 @@ def evergreen_yaml(conf):
             res = requests.post(settings_url, json={'username': conf.username, 'password': conf.jira_pwd})
             if res.status_code != 200:
                 get_logger().error('Failed to fetch API key from evergreen. Error: %s', str(res))
-                input(instruction('Press any key to retry...'))
+                req_input('Press any key to retry...')
+                conf.reset_jira_credentials()
                 continue
             res_json = res.json()
 
@@ -74,14 +75,13 @@ def ssh_keys(ctx):
                           str(ssh_dir / 'config'))
         fh.write('Host github.com\n\tStrictHostKeyChecking no\n')
 
-    res = input(instruction('Opening browser for instructions to setting up ssh keys in GitHub, '
-                            'press any key to continue, enter "skip" to skip: '))
+    res = req_input('Opening browser for instructions to setting up ssh keys in GitHub, '
+                    'press any key to continue, enter "skip" to skip: ')
 
     if res != 'skip':
         webbrowser.open(config.GITHUB_SSH_HELP_URL)
-        # TODO: fix name
-        get_logger().info(instruction('Once you\'ve generated SSH keys and added them to GitHub, '
-                                      'please rerun `workflow setup.macos`'))
+        get_logger().info(actionable('Once you\'ve generated SSH keys and added them to GitHub, '
+                                     'please rerun `workflow setup.macos`'))
         sys.exit(0)
 
     else:
@@ -96,9 +96,8 @@ def clone_repos(ctx):
         for repo_config in config.REQUIRED_REPOS:
             repo_dir = config.REPO_ROOT / repo_config.relative_local
             if repo_dir.exists():
-                get_logger().warning(
-                    'Local directory %s exists. If you\'d like to re-clone,'
-                    'please delete this directory first', str(repo_dir))
+                get_logger().warning('Local directory %s exists.', str(repo_dir))
+                get_logger().warning('If you\'d like to re-clone, please delete this directory first')
             else:
                 cmd = f'git clone {repo_config.remote} {repo_dir}'
                 get_logger().info(cmd)
@@ -108,7 +107,7 @@ def clone_repos(ctx):
 def create_dir(ctx, conf, dir_absolute):
     d = pathlib.Path(dir_absolute)
     if d.exists() and d.owner() == config.USER:
-        get_logger().warning(f'Directory {d} exists and is owned by the current user, skipping creating it')
+        get_logger().warning(f'Directory {d} exists and is owned by the current user, skipping creation')
         return True
 
     # Need Invoke for sudo. Can't use native Python mkdir().
@@ -122,7 +121,7 @@ def _do_download(ctx, download_config):
     with ctx.cd(str(config.HOME)):
         local_path = config.HOME / download_config.relative_local
         if local_path.exists():
-            get_logger().warning('Local file %s exists. If you\'d like to re-download this '
+            get_logger().warning('File %s exists. If you\'d like to re-download this '
                                  'file, please delete the local copy first.', local_path)
         else:
             cmd = f'curl -o {download_config.relative_local} {download_config.remote}'
@@ -130,34 +129,49 @@ def _do_download(ctx, download_config):
             ctx.run(cmd)
 
 
+def _download_executable_tarball(ctx, download_config, default_name, pretty_name):
+    bin_dir = config.HOME / 'bin'
+
+    if (bin_dir / pretty_name).exists():
+        get_logger().warning('File/Directory %s already exists. Skipping install', str(bin_dir / pretty_name))
+        return
+
+    download_config.relative_local = f'bin/{pretty_name}.tar.xz'
+    _do_download(ctx, download_config)
+
+    with ctx.cd(str(bin_dir)):
+        ctx.run(f'tar -xvzf {pretty_name}.tar.xz')
+        ctx.run(f'rm -f {pretty_name}.tar.xz')
+        ctx.run(f'mv {default_name} {pretty_name}')
+
+
 def download_clang_format(ctx):
     bin_dir = config.HOME / 'bin'
 
     if (bin_dir / 'clang-format').exists():
-        get_logger().warning('File %s already exists. Skipping installing clang-format',
+        get_logger().warning('File %s already exists. Skipping install',
                              str(bin_dir / 'clang-format'))
-        return True
+        return
 
-    dc = DownloadConfig(
-        'https://s3.amazonaws.com/boxes.10gen.com/build/clang%2Bllvm-3.8.0-x86_64-apple-darwin.tar.xz',
-        relative_local='bin/llvm3.8.0.tar.xz'
-    )
+    dc = DownloadConfig(config.CLANG_FORMAT_URL)
 
-    _do_download(ctx, dc)
+    default_name = 'clang+llvm-3.8.0-x86_64-apple-darwin'
+    pretty_name = 'llvm-3.8.0'
+
+    _download_executable_tarball(ctx, dc, default_name=default_name, pretty_name=pretty_name)
 
     with ctx.cd(str(bin_dir)):
-        ugly_name = 'clang+llvm-3.8.0-x86_64-apple-darwin'
-        pretty_name = 'llvm-3.8.0'
-
-        if not (bin_dir / pretty_name).exists():
-            ctx.run('tar -xvzf llvm3.8.0.tar.xz')
-
-            ctx.run(f'mv {ugly_name} {pretty_name}')
-        else:
-            get_logger().warning('Directory %s exists. Skipping extracting llvm', str(bin_dir / pretty_name))
-
-        # softlink clang-format to a convenient location.
+        # softlink clang-format to PATH.
         ctx.run(f'ln -s {str(bin_dir / pretty_name / "bin" / "clang-format")} clang-format')
+
+
+def download_eslint(ctx):
+    dc = DownloadConfig(config.ESLINT_URL)
+
+    default_name = 'eslint-Darwin-x86_64'
+    pretty_name = 'eslint'
+
+    _download_executable_tarball(ctx, dc, default_name=default_name, pretty_name=pretty_name)
 
 
 def download_evergreen(ctx):
@@ -194,14 +208,14 @@ def install_githooks(ctx):
     with ctx.cd(str(mongo_dir)):
         ctx.run(f'source buildscripts/install-hooks -f')
 
-        todo = instruction('TODO:')
-        get_logger().info(f'{todo} Please consult with your mentor on which githooks are needed. '
-                          'Some hooks may be unnecessarily cumbersome for your project.')
-        get_logger().info('      You can delete any unneeded hooks in `%s` and rerun this script',
+        todo = actionable('TODO:')
+        get_logger().info(f'{todo} Please consult with your mentor on which githooks are needed. Some hooks may be')
+        get_logger().info('      unnecessarily cumbersome for your project. You can delete any unneeded hooks in ')
+        get_logger().info(f'     `%s` and rerun `workflow macos.setup`',
                           str(kernel_tools_dir / "githooks" / "pre-push"))
 
 
-def setup_mongo_repo_python(ctx):
+def setup_mongo_repo_env(ctx):
     mongo_dir = config.REPO_ROOT / 'mongo'
     python3_venv_dir = 'python3-venv'
 
@@ -225,10 +239,21 @@ def setup_mongo_repo_python(ctx):
         with ctx.prefix('source python3-venv/bin/activate'):
             install_cmds = [
                 'pip install -r etc/pip/dev-requirements.txt',
-                'pip install regex'
+                'pip install regex',
             ]
 
+            # Lazily create build.ninja since it takes a long time.
+            if not pathlib.Path(mongo_dir / 'build.ninja').exists():
+                install_cmds.append(
+                    'python buildscripts/scons.py CC=clang CXX=clang++ VARIANT_DIR=ninja  MONGO_VERSION=\'0.0.0\' '
+                    'MONGO_GIT_HASH=\'unknown\' --link-model=dynamic build.ninja')
+
             run_cmds(install_cmds)
+
+        compiledb_cmds = [
+            'ninja compiledb'
+        ]
+        run_cmds(compiledb_cmds)
 
 
 def install_ninja(ctx):
@@ -237,7 +262,7 @@ def install_ninja(ctx):
     except UnexpectedExit:
         ctx.run('brew install ninja')
     else:
-        get_logger().warning('ninja appears to be already installed, skipping installing it again')
+        get_logger().warning('ninja appears to be already installed, skipping install')
 
 
 def install_shell_profile(ctx):
@@ -246,21 +271,41 @@ def install_shell_profile(ctx):
     with open(profile, 'w') as fh:
         fh.write(shell_profile_template)
 
-    todo = instruction('TODO:')
+    todo = actionable('TODO:')
     get_logger().info(f'{todo} Please add the following line to your shell config file, if you haven\'t already ')
     get_logger().info('      done so. The default shell config file is ~/.profile. If you\'re using a')
     get_logger().info('      different shell, e.g. zsh, you may have a different config file, e.g. ~/.zshrc')
     get_logger().info('')
-    get_logger().info(instruction('      source %s'), str(profile))
+    get_logger().info(actionable('      source %s'), str(profile))
+
+
+def post_task_instructions():
+    lines = [
+        actionable('Note on Using "compiledb":'),
+        '    A Clang JSON Compilation Database (compiledb) has been generated for the mongo repository.',
+        '    It enables features like jump to definition and semantic code completion in code editors. Please refer',
+        '    to the following web page on how to integrate compiledb with your favorite editor',
+        '',
+        '    https://sarcasm.github.io/notes/dev/compilation-database.html#text-editors-and-ides',
+        '',
+        '    When you switch branches or add/remove files, compiledb needs to be updated by running `ninja compiledb`',
+        '',
+        '    If you\'d like to use an editor that "just works", The CLion IDE is a good option. You just need',
+        '    to install it and open the "mongo" directory. Code completion and jumping to definitions will',
+        '    automatically work',
+        '',
+        '    To install CLion, run: `brew cask install clion`'
+    ]
+
+    log_multiline(get_logger().info, lines)
 
 
 @task
 def macos(ctx):
     """
-    TODO: document me
-    
-    :param ctx:
-    :return:
+    Set up macOS for MongoDB server development.
+
+    If you're running the workflow tool for the first time, please use the bootstrap script from README.md.
     """
     conf = config.Config()
 
@@ -275,20 +320,18 @@ def macos(ctx):
         (lambda: evergreen_yaml(conf), 'Configure Evergeen'),
         (lambda: clone_repos(ctx), 'Clone MongoDB Repositories'),
         (lambda: download_clang_format(ctx), 'Download clang-format'),
+        (lambda: download_eslint(ctx), 'Download eslint'),
         (lambda: download_evergreen(ctx), 'Download evergreen CLI'),
         (lambda: install_ninja(ctx), 'Install ninja'),
 
         # Next do mongo repo setup. These tasks require the system setup steps above to have run.
-        (lambda: setup_mongo_repo_python(ctx), 'Setup Python Dependencies for the mongo Repository'),
+        (lambda: setup_mongo_repo_env(ctx), 'Setup the mongo Repository'),
 
         # Do tasks that require followup work last.
         (lambda: install_githooks(ctx), 'Install Git Hooks'),
-        (lambda: install_shell_profile(ctx), 'Install Shell Profile')
-
-        # TODO: upload.py
-        # TODO: generate compile db
-        # TODO: post install steps
+        (lambda: install_shell_profile(ctx), 'Install Shell Profile'),
+        (lambda: post_task_instructions(), 'Post Setup Instructions')
     ]
 
     for func in funcs:
-        success = log_func(func[0], func[1])
+        log_func(func[0], func[1])

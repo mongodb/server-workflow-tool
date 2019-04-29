@@ -16,8 +16,6 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-import logging
-import sys
 
 
 def singleton(cls):
@@ -30,36 +28,15 @@ def singleton(cls):
     return getinstance
 
 
-_logger = None
-
-
-def get_logger(level=None):
-    global _logger
-
-    if not _logger:
-        logger = logging.getLogger('workflow')
-        logger.setLevel(level)
-        formatter = logging.Formatter('[%(levelname)s] %(message)s')
-        stdout = logging.StreamHandler(sys.stdout)
-        stdout.setFormatter(formatter)
-        logger.addHandler(stdout)
-        _logger = logger
-    return _logger
-
-
-def instruction(msg):
+class InvalidConfigError(Exception):
     """
-    Make instructions to actionable items green so they stand out from generic logging.
+    Error indicating invalid configuration or usage of the workflow tool.
     """
-    return f'\033[92m{msg}\033[0m'
+    pass
 
 
-def log_func(func, human_name):
-    grey = lambda msg: f'\033[90m{msg}\033[0m'
-    get_logger().info(grey('    ----- Starting Task: %s -----'), human_name)
-    retval = func()
-    get_logger().info(grey('    ----- Finished Task: %s -----'), human_name)
-    get_logger().info('')
-    get_logger().info('')
-
-    return retval
+class RequireUserInputError(Exception):
+    """
+    Error type indicating user input is needed outside of this tool.
+    """
+    pass

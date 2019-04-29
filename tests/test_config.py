@@ -24,7 +24,7 @@ import tempfile
 import unittest
 
 import serverworkflowtool.config as config
-from serverworkflowtool.utils import get_logger
+from serverworkflowtool.utils.log import get_logger
 
 
 class ConfigTest(unittest.TestCase):
