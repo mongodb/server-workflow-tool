@@ -73,7 +73,7 @@ def anew(ctx, ticket_number, project='server', base_branch='master'):
         conf = config.TicketConfig()
         conf.base_branch = base_branch
         if issue:
-            conf.ticket_summary = issue.summary
+            conf.ticket_summary = issue.fields.summary
         else:
             conf.ticket_summary = branch_name.upper()
 
@@ -157,7 +157,7 @@ def patch(ctx, finalize='yes'):
         webbrowser.open(evg_url)
     else:
         get_logger().info('Patch build starting...')
-        get_logger().url(f'Patch web page URL: {evg_url}')
+        get_logger().info(f'Patch web page URL: {evg_url}')
 
 
 @task(aliases='r')
@@ -260,7 +260,7 @@ def zzz(ctx):
 
     jira.transition_ticket(
         feature_branch.upper(),
-        'In Code review',
+        'In Code Review',
         'Close Issue'
     )
 
