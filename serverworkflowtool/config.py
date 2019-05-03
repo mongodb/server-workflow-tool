@@ -45,7 +45,7 @@ CONFIG_FILE = CONFIG_DIR / 'config.pickle'
 EVG_CONFIG_FILE = HOME / '.evergreen.yml'
 SSH_KEY_FILE = HOME / '.ssh' / 'id_rsa'
 
-EVG_PATCH_URL_BASE = 'https://evergreen.mongodb.com/version'
+EVG_PATCH_URL_BASE = 'https://evergreen.mongodb.com/version/'
 JIRA_URL = 'https://jira.mongodb.org'
 GITHUB_SSH_HELP_URL = ('https://help.github.com/articles/'
                        'generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac')

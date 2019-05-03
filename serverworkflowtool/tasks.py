@@ -250,8 +250,8 @@ def zzz(ctx):
     feature_branch = git.cur_branch_name(ctx)
     base_branch = ticket_conf.base_branch
 
-    actionable(f'Congrats on completing {feature_branch.upper()}! '
-               f'Press any key to remove local branches and close the Jira ticket')
+    input(actionable(f'Congrats on completing {feature_branch.upper()}!'
+                     f'Press any key to remove local branches and close the Jira ticket'))
 
     config.Config().in_progress_tickets.pop(feature_branch)
 
