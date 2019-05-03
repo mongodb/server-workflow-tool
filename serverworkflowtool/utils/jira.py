@@ -18,6 +18,7 @@
 #  under the License.
 
 import jira.exceptions
+import requests
 
 from serverworkflowtool import config
 from serverworkflowtool.utils.log import get_logger
@@ -62,6 +63,8 @@ def transition_ticket(ticket, from_status, transition_name):
     except jira.exceptions.JIRAError as e:
         get_logger().error('Failed to do transition "%s" for ticket %s due to Jira error: %s',
                            transition_name, ticket, e.text)
+    except requests.exceptions.ReadTimeout as e:
+        get_logger().error('Failed to connect to Jira: %s', repr(e))
 
 
 def add_comment(ticket, comment, **kwargs):
@@ -70,3 +73,5 @@ def add_comment(ticket, comment, **kwargs):
         jirac.add_comment(ticket, comment, **kwargs)
     except jira.exceptions.JIRAError as e:
         get_logger().error('Failed to add comment "%s" to ticket %s due to Jira error: %s', comment, ticket, e.text)
+    except requests.exceptions.ReadTimeout as e:
+        get_logger().error('Failed to connect to Jira: %s', repr(e))
