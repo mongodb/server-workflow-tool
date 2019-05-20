@@ -23,7 +23,7 @@ mkvirtualenv --python python3 mongo
 python3 -m pip install --upgrade pip setuptools
 
 # Install the server workflow tool.
-python3 -m pip install git+https://github.com/guoyr/test.git@develop
+python3 -m pip install git+https://github.com/mongodb/server-workflow-tool.git@develop
 
 # Run the workflow tool.
 workflow setup.macos
