@@ -1,6 +1,0 @@
-projects:
-- name: mongodb-mongo-master
-  default: true
-  alias: required
-  tasks:
-  - all
