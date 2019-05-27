@@ -18,12 +18,14 @@ python3 -m pip install --upgrade pip setuptools
 # Install the server workflow tool.
 python3 -m pip install git+https://github.com/mongodb/server-workflow-tool.git
 
-# Run the workflow tool.
+# Run the workflow tool to set up your dev environment.
 workflow setup.macos
 ```
 
 ## Usage:
 ```
+workflow --help
+
 Usage: workflow <subcommand> [--subcommand-opts] ...
 
 Subcommands:
