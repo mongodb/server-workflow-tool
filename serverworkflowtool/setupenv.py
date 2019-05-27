@@ -257,9 +257,10 @@ def setup_mongo_repo_env(ctx):
 
 def install_ninja(ctx):
     try:
+        # Use ninja as a sentinel to check if this step as run.
         ctx.run('ninja --version')
     except UnexpectedExit:
-        ctx.run('brew install ninja')
+        ctx.run('brew install ninja icecream ccache')
     else:
         get_logger().warning('ninja appears to be already installed, skipping install')
 
@@ -321,7 +322,7 @@ def macos(ctx):
         (lambda: download_clang_format(ctx), 'Download clang-format'),
         (lambda: download_eslint(ctx), 'Download eslint'),
         (lambda: download_evergreen(ctx), 'Download evergreen CLI'),
-        (lambda: install_ninja(ctx), 'Install ninja'),
+        (lambda: install_ninja(ctx), 'Install ninja, icecream, ccache'),
 
         # Next do mongo repo setup. These tasks require the system setup steps above to have run.
         (lambda: setup_mongo_repo_env(ctx), 'Setup the mongo Repository'),
