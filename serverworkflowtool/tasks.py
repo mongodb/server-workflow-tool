@@ -21,7 +21,7 @@ import re
 import urllib.parse
 import webbrowser
 
-from invoke import task
+from invoke import task, UnexpectedExit
 
 import serverworkflowtool.utils.git as git
 import serverworkflowtool.helpers as helpers
@@ -34,7 +34,7 @@ from serverworkflowtool.utils.log import get_logger, actionable, req_input
 @task(aliases=['a', 'start', 'switch'], positional=['ticket_number'], optional=['base_branch', 'project'])
 def anew(ctx, ticket_number, project='server', base_branch='master'):
     """
-    Step 0: Start a ticket or continue working on an existing ticket.
+    Step 0: Start a ticket or continue working on an existing ticket
 
     A git branch is created for every Jira ticket and there is a one-to-one correspondence. If you need to
     work on two pieces of the same Jira ticket concurrently and have them reviewed separately, consider
@@ -122,7 +122,7 @@ def commit(ctx):
 @task(aliases='p', optional=['finalize'])
 def patch(ctx, finalize='yes'):
     """
-    Step 3: Run a patch build in Evergreen CI.
+    Step 3: Run a patch build in Evergreen CI
 
     :param finalize: pass in any falsy value to avoid kicking off the patch build immediately.
     """
@@ -156,14 +156,15 @@ def patch(ctx, finalize='yes'):
         # Point the user to the patch build URL if finalize is false.
         webbrowser.open(evg_url)
     else:
-        get_logger().info('Patch build starting...')
-        get_logger().info(f'Patch web page URL: {evg_url}')
+        get_logger().info(f'Patch build starting at URL: {evg_url}')
+        get_logger().info('You can configure Slack and Email notifications for your patch builds at '
+                          'https://evergreen.mongodb.com/notifications')
 
 
 @task(aliases='r')
 def review(ctx):
     """
-    Step 4: Open a new code review (CR) or put up a new patch to an existing code review.
+    Step 4: Open a new code review (CR) or put up a new patch to an existing code review
     """
     helpers.check_mongo_repo_root()
 
@@ -174,11 +175,12 @@ def review(ctx):
                              'before `review`')
 
     with ctx.prefix(helpers.virtualenv):
-        def upload(existing_cr):
+        def upload(existing_cr, repo_name):
             has_changes = ctx.run(f'git diff {ticket_conf.base_branch}').stdout.strip()
-            if not has_changes:
-                cwd = ctx.run('pwd').stdout.strip()
-                get_logger().info(f'There are no changes in {cwd}, skipping code review')
+            if has_changes:
+                get_logger().info(f'Submitting code review for the {repo_name} repo')
+            else:
+                get_logger().info(f'There are no changes in the {repo_name} repository, skipping code review')
                 return
 
             cmd = f'python {str(config.UPLOAD_PY)} --rev {ticket_conf.base_branch}...'  # Yes three dots.
@@ -224,9 +226,9 @@ def review(ctx):
                 get_logger().info(f'Code review updated')
                 return existing_cr
 
-        ticket_conf.cr_info.community = upload(ticket_conf.cr_info.community)
+        ticket_conf.cr_info.community = upload(ticket_conf.cr_info.community, 'community')
         with ctx.cd(git.ent_repo_rel_path):
-            ticket_conf.cr_info.enterprise = upload(ticket_conf.cr_info.enterprise)
+            ticket_conf.cr_info.enterprise = upload(ticket_conf.cr_info.enterprise, 'enterprise')
 
         note = actionable('Note:')
         get_logger().info('')
@@ -239,24 +241,32 @@ def review(ctx):
 
 
 @task(aliases=['z'])
-def zzz(ctx):
+def zzz(ctx, force=False):
     """
     Step 6: Cleanup. Remove local branches and close Jira ticket
-    :param ctx:
-    :return:
+
+    :param force: Force delete the local branch even if it's not fully merged
     """
     helpers.check_mongo_repo_root()
     ticket_conf = helpers.get_ticket_conf(ctx)
     feature_branch = git.cur_branch_name(ctx)
     base_branch = ticket_conf.base_branch
 
-    input(actionable(f'Congrats on completing {feature_branch.upper()}!'
-                     f'Press any key to remove local branches and close the Jira ticket'))
+    get_logger().info(f'🍦 Congrats on completing {feature_branch.upper()}! 🍦')
+    input(actionable(f'Press any key to remove local branches and close the Jira ticket'))
 
     config.Config().in_progress_tickets.pop(feature_branch)
 
     ctx.run(f'git checkout {base_branch}')
-    ctx.run(f'git branch --delete {feature_branch}')
+
+    try:
+        if force:
+            ctx.run(f'git branch -D {feature_branch}')
+        else:
+            ctx.run(f'git branch --delete {feature_branch}')
+    except UnexpectedExit as e:
+        get_logger().error(e)
+        get_logger().error(f'Failed to delete branch, please manually delete your local branch {feature_branch}')
 
     jira.transition_ticket(
         feature_branch.upper(),
@@ -268,7 +278,7 @@ def zzz(ctx):
 @task(aliases=['s', 'push'])
 def ship(ctx):
     """
-    Step 5: Provide instructions on pushing your changes to master.
+    Step 5: Provide instructions on pushing your changes to master
 
     Also add the URL of the latest patch build to the Jira ticket.
     """
@@ -302,7 +312,7 @@ def ship(ctx):
         '',
         'If you encounter errors during any of the above steps, please ask your mentor for advice.',
         '',
-        'Finally, when you\'ve pushed your changes, you can run `workflow zzz'
+        'Finally, when you\'ve pushed your changes, run `workflow zzz` to delete your local branches'
     ]
     log.log_multiline(get_logger().info, lines)
 
@@ -310,6 +320,8 @@ def ship(ctx):
 @task
 def code(ctx):
     """
-    Step 1: 💻 Write code. (Informational only, there's no need to run `workflow code`)️
+    Step 1: 💻 Write code. (Informational. This tool can't help you write code)️
     """
-    print('https://github.com/mongodb/mongo/blob/master/src/mongo/idl/unittest.idl')
+    print('I\'m afraid I can\'t do that, Dave.')
+    # Easter egg link to IDL.
+    print('But do you know about IDL? https://github.com/mongodb/mongo/blob/master/buildscripts/idl/sample/sample.idl')

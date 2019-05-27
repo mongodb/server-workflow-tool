@@ -108,6 +108,6 @@ def delete_branch(ctx):
 @task
 def upgrade(ctx):
     """
-    Upgrade the workflow tool to the latest version
+    [Experimental] Pull in the latest version of this tool. Does not work when installed through virtualenv.
     """
-    pass
+    ctx.run('python3 -m pip install --upgrade git+https://github.com/mongodb/server-workflow-tool.git')
