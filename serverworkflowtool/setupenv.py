@@ -227,8 +227,7 @@ def setup_mongo_repo_env(ctx):
     with ctx.cd(str(mongo_dir)):
         if not (mongo_dir / python3_venv_dir).exists():
             install_venv_cmds = [
-                'python3 -m pip install virtualenv',
-                f'python3 -m virtualenv {python3_venv_dir}',
+                f'python3 -m venv {python3_venv_dir}',
             ]
 
             run_cmds(install_venv_cmds)
@@ -250,10 +249,10 @@ def setup_mongo_repo_env(ctx):
 
             run_cmds(install_cmds)
 
-        compiledb_cmds = [
-            'ninja compiledb'
-        ]
-        run_cmds(compiledb_cmds)
+            compiledb_cmds = [
+                'ninja compiledb'
+            ]
+            run_cmds(compiledb_cmds)
 
 
 def install_ninja(ctx):
