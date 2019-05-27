@@ -245,7 +245,7 @@ def setup_mongo_repo_env(ctx):
             if not pathlib.Path(mongo_dir / 'build.ninja').exists():
                 install_cmds.append(
                     'python buildscripts/scons.py CC=clang CXX=clang++ VARIANT_DIR=ninja  MONGO_VERSION=\'0.0.0\' '
-                    'MONGO_GIT_HASH=\'unknown\' --link-model=dynamic build.ninja')
+                    'MONGO_GIT_HASH=\'unknown\' --link-model=dynamic --icecream build.ninja')
 
             run_cmds(install_cmds)
 
