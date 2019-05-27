@@ -24,7 +24,7 @@ workflow setup.macos
 
 ## Usage:
 ```
-workflow --help
+$ workflow --help
 
 Usage: workflow <subcommand> [--subcommand-opts] ...
 
