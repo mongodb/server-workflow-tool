@@ -249,6 +249,9 @@ def setup_mongo_repo_env(ctx):
                 install_cmds.append(
                     'python src/mongo/db/modules/ninja/darwin/setup_icecream.py'
                 )
+            else:
+                get_logger().info('Found existing "build.ninja". If you have problems with ninja or icecream, ')
+                get_logger().info('please remove "build.ninja" from your mongo repo and rerun `workflow setup.macos`')
 
             run_cmds(install_cmds)
 
@@ -318,7 +321,7 @@ def macos(ctx):
         # Do tasks that require user interaction first.
         (lambda: ssh_keys(ctx), 'Configure SSH Keys'),
         (lambda: create_dir(ctx, conf, '/data'), 'Create MongoDB Data Directory'),
-        (lambda: create_dir(ctx, conf, '/opt/mongodbtoolchain'), 'Create MongoDB Toolchain Directory'),
+        (lambda: create_dir(ctx, conf, '/opt/mongodbtoolchain/revisions'), 'Create MongoDB Toolchain Directory'),
         (lambda: create_dir(ctx, conf, str(config.HOME / 'bin')), 'Create User bin Directory'),
 
         # Then do the automated tasks that don't require user interaction.
@@ -340,3 +343,6 @@ def macos(ctx):
 
     for func in funcs:
         log_func(func[0], func[1])
+
+    get_logger().info('Finished setting up macOS for MongoDB development!')
+    get_logger().info(f'Please go over any action items above highlighted in {actionable("green")}.')
