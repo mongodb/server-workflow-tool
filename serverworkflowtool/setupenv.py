@@ -273,7 +273,10 @@ def install_shell_profile(ctx):
 def post_task_instructions():
     lines = [
         actionable('Note on Using "compiledb":'),
-        '    A Clang JSON Compilation Database (compiledb) has been generated for the mongo repository.',
+        '    A Clang JSON Compilation Database (compiledb) can be generated for the mongo repository by running',
+        '',
+        '    `ninja compiledb` (from the mongo repo at ~/mongodb/mongo)',
+        '',
         '    It enables features like jump to definition and semantic code completion in code editors. Please refer',
         '    to the following web page on how to integrate compiledb with your favorite editor',
         '',

@@ -40,3 +40,6 @@ env.bak/
 venv.bak/
 
 cache
+
+# IDE
+.idea
