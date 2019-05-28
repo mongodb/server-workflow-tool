@@ -241,24 +241,7 @@ def setup_mongo_repo_env(ctx):
                 'pip install regex',
             ]
 
-            # Lazily create build.ninja since it takes a long time.
-            if not pathlib.Path(mongo_dir / 'build.ninja').exists():
-                install_cmds.append(
-                    'python buildscripts/scons.py CC=clang CXX=clang++ VARIANT_DIR=ninja  MONGO_VERSION=\'0.0.0\' '
-                    'MONGO_GIT_HASH=\'unknown\' --link-model=dynamic --icecream build.ninja')
-                install_cmds.append(
-                    'python src/mongo/db/modules/ninja/darwin/setup_icecream.py'
-                )
-            else:
-                get_logger().info('Found existing "build.ninja". If you have problems with ninja or icecream, ')
-                get_logger().info('please remove "build.ninja" from your mongo repo and rerun `workflow setup.macos`')
-
             run_cmds(install_cmds)
-
-            compiledb_cmds = [
-                'ninja compiledb'
-            ]
-            run_cmds(compiledb_cmds)
 
 
 def install_ninja(ctx):
