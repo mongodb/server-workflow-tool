@@ -119,11 +119,12 @@ def commit(ctx):
             ticket_conf.commits.append(commit_info)
 
 
-@task(aliases='p', optional=['finalize'])
-def patch(ctx, finalize='yes'):
+@task(aliases='p', optional=['finalize', 'alias'])
+def patch(ctx, finalize='yes', alias='required'):
     """
     Step 3: Run a patch build in Evergreen CI
 
+    :param alias: the Evergreen alias for determining the set of tasks to run, defaults to "required".
     :param finalize: pass in any falsy value to avoid kicking off the patch build immediately.
     """
     helpers.check_mongo_repo_root()
@@ -136,7 +137,7 @@ def patch(ctx, finalize='yes'):
 
     # Use the commit message from the latest commit as the patch build description.
     commit_msg = ctx.run('git log -1 --pretty=%B').stdout.strip()
-    cmd = f'evergreen patch --alias required --description "{commit_msg}" --yes'
+    cmd = f'evergreen patch --alias {alias} --description "{commit_msg}" --yes'
     if finalize == 'yes':
         # Any other value specified through the commandline is considered falsy.
         cmd += ' --finalize'

@@ -246,6 +246,9 @@ def setup_mongo_repo_env(ctx):
                 install_cmds.append(
                     'python buildscripts/scons.py CC=clang CXX=clang++ VARIANT_DIR=ninja  MONGO_VERSION=\'0.0.0\' '
                     'MONGO_GIT_HASH=\'unknown\' --link-model=dynamic --icecream build.ninja')
+                install_cmds.append(
+                    'python src/mongo/db/modules/ninja/darwin/setup_icecream.py'
+                )
 
             run_cmds(install_cmds)
 
@@ -263,6 +266,8 @@ def install_ninja(ctx):
         ctx.run('brew install ninja icecream ccache')
     else:
         get_logger().warning('ninja appears to be already installed, skipping install')
+
+    (config.HOME / 'Library' / 'LaunchAgents').mkdir(parents=True, exist_ok=True)
 
 
 def install_shell_profile(ctx):
