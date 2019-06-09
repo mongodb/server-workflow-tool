@@ -62,6 +62,7 @@ def anew(ctx, ticket_number, project='server', base_branch='master'):
     # Starting a new ticket.
     else:
         git.refresh_repos(ctx, base_branch)
+        git.checkout_branch(ctx, base_branch, silent=True)
         git.new_branch(ctx, branch_name)
 
         issue = jira.transition_ticket(
@@ -184,7 +185,7 @@ def review(ctx):
                 get_logger().info(f'There are no changes in the {repo_name} repository, skipping code review')
                 return
 
-            cmd = f'python {str(config.UPLOAD_PY)} --rev {ticket_conf.base_branch}...'  # Yes three dots.
+            cmd = f'python {str(config.UPLOAD_PY)} --rev {ticket_conf.base_branch}@{{upstream}}...'  # Yes three dots.
             cmd += ' --nojira -y --git_similarity 90 --check-clang-format --check-eslint'
 
             if existing_cr is not None:
