@@ -23,7 +23,7 @@ import pkg_resources
 
 from invoke import Program, Collection
 
-from serverworkflowtool import setupenv, tasks, helpers
+from serverworkflowtool import setupenv, helpers
 from serverworkflowtool.config import Config
 from serverworkflowtool.utils import InvalidConfigError, RequireUserInputError
 from serverworkflowtool.utils.log import get_logger
@@ -37,7 +37,7 @@ def run():
         'NINJA_STATUS': '[%f/%t (%p) %es] '  # make the ninja output even nicer
     }
 
-    ns = Collection.from_module(tasks, config=invoke_config)
+    ns = Collection()
     ns.add_collection(Collection.from_module(setupenv, name='setup', config=invoke_config))
     ns.add_collection(Collection.from_module(helpers, name='helpers', config=invoke_config))
 

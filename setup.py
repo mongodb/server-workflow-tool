@@ -39,7 +39,6 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
     ],
     install_requires=[
-        'jira == 2.0.0',
         'keyring == 19.0.1',
         'invoke == 1.2.0',
         'pyyaml == 5.1',

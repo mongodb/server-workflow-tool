@@ -20,7 +20,6 @@ import getpass
 import pathlib
 import pickle
 
-import jira
 import keyring
 import keyring.errors
 import invoke.exceptions
@@ -46,7 +45,6 @@ EVG_CONFIG_FILE = HOME / '.evergreen.yml'
 SSH_KEY_FILE = HOME / '.ssh' / 'id_rsa'
 
 EVG_PATCH_URL_BASE = 'https://evergreen.mongodb.com/version/'
-JIRA_URL = 'https://jira.mongodb.org'
 GITHUB_SSH_HELP_URL = ('https://help.github.com/articles/'
                        'generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/#platform-mac')
 
@@ -139,9 +137,6 @@ class _ConfigImpl(object):
         self.in_progress_tickets = None
 
         self._username = None
-
-        self._jira = None
-        self._jira_pwd = None
         self._sudo_pwd = None
 
         self._version = None
@@ -156,9 +151,6 @@ class _ConfigImpl(object):
         self.in_progress_tickets = {}
 
         self._username = None
-
-        self._jira = None
-        self._jira_pwd = None
         self._sudo_pwd = None
 
         # Default to version 1, this will be overridden by the value in the config file.
@@ -171,26 +163,9 @@ class _ConfigImpl(object):
         d = self.__dict__.copy()
 
         # Remove sensitive and unnecessary info.
-        d['_jira_pwd'] = None
-        d['_jira'] = None
         d['_sudo_pwd'] = None
 
         return d
-
-    def reset_jira_credentials(self):
-        """
-        Reset Jira credentials; for when the user accidentally entered the wrong information.
-        :return:
-        """
-        if self.username is not None:
-            self._username = None
-            self._jira_pwd = None
-            try:
-                keyring.delete_password(JIRA_URL, self.username)
-            except keyring.errors.PasswordDeleteError as e:
-                get_logger().error(str(e))
-        else:
-            get_logger().warning('Attempting to delete Jira password without a username')
 
     def get_sudo_pwd(self, ctx):
         if not self._sudo_pwd:
@@ -210,50 +185,11 @@ class _ConfigImpl(object):
         return self._sudo_pwd
 
     @property
-    def jira_pwd(self):
-        if not self._jira_pwd:
-            jira_pwd = keyring.get_password(JIRA_URL, self.username)
-            if not jira_pwd:
-                jira_pwd = getpass.getpass(prompt=actionable('Please enter your Jira password: '))
-            keyring.set_password(JIRA_URL, self.username, jira_pwd)
-            self._jira_pwd = jira_pwd
-        return self._jira_pwd
-
-    @property
     def username(self):
         if not self._username:
             self._username = input(
                 actionable('Please enter your Jira username (firstname.lastname): '))
         return self._username
-
-    @property
-    def jira(self):
-        """
-        lazily get a jira client.
-        """
-        if not self._jira:
-            while True:
-                try:
-                    _jira = jira.JIRA(
-                        options={'server': JIRA_URL},
-                        basic_auth=(self.username, self.jira_pwd),
-                        validate=True,
-                        logging=False,
-                        max_retries=3,
-                        timeout=5,  # I think the unit is seconds.
-                    )
-                    if _jira:
-                        self._jira = _jira
-                        break
-                except jira.exceptions.JIRAError as e:
-                    get_logger().warning(
-                        'Failed to login to Jira. Please re-enter your username and password. '
-                        'If the failure persists, please login to Jira manually in a browser. '
-                        'If that still doesn\'t work, seek help in #new-server-eng-help')
-                    get_logger().debug(e)
-                    self.reset_jira_credentials()
-
-        return self._jira
 
     def dump(self):
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)

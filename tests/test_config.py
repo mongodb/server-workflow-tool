@@ -47,7 +47,6 @@ class ConfigTest(unittest.TestCase):
 
             old_config.git_branches = ['server1', 'server2']
             old_config._username = 'dummy_user'
-            old_config._jira_pwd = 'old_jira_pwd'
             old_config._sudo_pwd = 'old_sudo_pwd'
             old_config.dump()
 
@@ -59,8 +58,4 @@ class ConfigTest(unittest.TestCase):
             self.assertEqual(new_config.username, old_config.username)
 
             # Passwords should not be persisted.
-            self.assertEqual(new_config._jira_pwd, None)
             self.assertEqual(new_config._sudo_pwd, None)
-
-            # Large objects should not be persisted.
-            self.assertEqual(new_config._jira, None)

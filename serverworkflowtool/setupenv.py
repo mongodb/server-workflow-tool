@@ -32,7 +32,6 @@ from serverworkflowtool.utils.log import get_logger, actionable, log_func, log_m
 
 
 def evergreen_yaml(conf):
-    # initialize Jira to get the jira user name for Evergreen.
     if config.EVG_CONFIG_FILE.exists():
         get_logger().info(
             'Found existing ~/.evergreen.yml, skipping adding Evergreen configuration')
@@ -41,12 +40,12 @@ def evergreen_yaml(conf):
             'make sure you know what\'s in there')
     else:
         settings_url = 'https://evergreen.mongodb.com/login/key'
+        pwd = req_input('Please enter your Evergreen password: ')
         while True:
-            res = requests.post(settings_url, json={'username': conf.username, 'password': conf.jira_pwd})
+            res = requests.post(settings_url, json={'username': conf.username, 'password': pwd})
             if res.status_code != 200:
                 get_logger().error('Failed to fetch API key from evergreen. Error: %s', str(res))
                 req_input('Press any key to retry...')
-                conf.reset_jira_credentials()
                 continue
             res_json = res.json()
 
