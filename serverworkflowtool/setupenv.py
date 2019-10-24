@@ -16,7 +16,7 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-
+import getpass
 import pathlib
 import sys
 import webbrowser
@@ -32,7 +32,6 @@ from serverworkflowtool.utils.log import get_logger, actionable, log_func, log_m
 
 
 def evergreen_yaml(conf):
-    # initialize Jira to get the jira user name for Evergreen.
     if config.EVG_CONFIG_FILE.exists():
         get_logger().info(
             'Found existing ~/.evergreen.yml, skipping adding Evergreen configuration')
@@ -42,11 +41,11 @@ def evergreen_yaml(conf):
     else:
         settings_url = 'https://evergreen.mongodb.com/login/key'
         while True:
-            res = requests.post(settings_url, json={'username': conf.username, 'password': conf.jira_pwd})
+            pwd = getpass.getpass(prompt=actionable('Please enter your Evergreen password: '))
+            res = requests.post(settings_url, json={'username': conf.username, 'password': pwd})
             if res.status_code != 200:
                 get_logger().error('Failed to fetch API key from evergreen. Error: %s', str(res))
                 req_input('Press any key to retry...')
-                conf.reset_jira_credentials()
                 continue
             res_json = res.json()
 
@@ -292,6 +291,7 @@ def post_task_instructions():
     ]
 
     log_multiline(get_logger().info, lines)
+    get_logger().warning('Please run mongod with `--dbpath /opt/data` as macOS 10.15+ does not allow modifying /')
 
 
 @task
@@ -306,7 +306,7 @@ def macos(ctx):
     funcs = [
         # Do tasks that require user interaction first.
         (lambda: ssh_keys(ctx), 'Configure SSH Keys'),
-        (lambda: create_dir(ctx, conf, '/data'), 'Create MongoDB Data Directory'),
+        (lambda: create_dir(ctx, conf, '/opt/data'), 'Create MongoDB Data Directory'),
         (lambda: create_dir(ctx, conf, '/opt/mongodbtoolchain/revisions'), 'Create MongoDB Toolchain Directory'),
         (lambda: create_dir(ctx, conf, str(config.HOME / 'bin')), 'Create User bin Directory'),
 
