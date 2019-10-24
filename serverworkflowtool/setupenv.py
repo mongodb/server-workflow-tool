@@ -16,7 +16,7 @@
 #  KIND, either express or implied.  See the License for the
 #  specific language governing permissions and limitations
 #  under the License.
-
+import getpass
 import pathlib
 import sys
 import webbrowser
@@ -40,8 +40,8 @@ def evergreen_yaml(conf):
             'make sure you know what\'s in there')
     else:
         settings_url = 'https://evergreen.mongodb.com/login/key'
-        pwd = req_input('Please enter your Evergreen password: ')
         while True:
+            pwd = getpass.getpass(prompt=actionable('Please enter your Evergreen password: '))
             res = requests.post(settings_url, json={'username': conf.username, 'password': pwd})
             if res.status_code != 200:
                 get_logger().error('Failed to fetch API key from evergreen. Error: %s', str(res))
@@ -291,6 +291,7 @@ def post_task_instructions():
     ]
 
     log_multiline(get_logger().info, lines)
+    get_logger().warning('Please run mongod with `--dbpath /opt/data` as macOS 10.15+ does not allow modifying /')
 
 
 @task
@@ -306,7 +307,6 @@ def macos(ctx):
         # Do tasks that require user interaction first.
         (lambda: ssh_keys(ctx), 'Configure SSH Keys'),
         (lambda: create_dir(ctx, conf, '/opt/data'), 'Create MongoDB Data Directory'),
-        get_logger().warning('Please run mongod with `--dbpath /opt/data` as macOS 10.15+ does not allow modifying /')
         (lambda: create_dir(ctx, conf, '/opt/mongodbtoolchain/revisions'), 'Create MongoDB Toolchain Directory'),
         (lambda: create_dir(ctx, conf, str(config.HOME / 'bin')), 'Create User bin Directory'),
 

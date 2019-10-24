@@ -20,8 +20,6 @@ import getpass
 import pathlib
 import pickle
 
-import keyring
-import keyring.errors
 import invoke.exceptions
 
 from serverworkflowtool.utils.log import get_logger, actionable
@@ -188,7 +186,7 @@ class _ConfigImpl(object):
     def username(self):
         if not self._username:
             self._username = input(
-                actionable('Please enter your Jira username (firstname.lastname): '))
+                actionable('Please enter your Evergreen username (firstname.lastname): '))
         return self._username
 
     def dump(self):
