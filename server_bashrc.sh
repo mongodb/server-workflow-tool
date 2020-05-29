@@ -2,10 +2,6 @@
 
 export NINJA_STATUS='[%f/%t (%p) %es] '
 
-function activate() {
-    source python3-venv/bin/activate
-}
-
 function buildninjaic() {
     activate
         ./buildscripts/scons.py  \
@@ -19,3 +15,4 @@ function buildninjaic() {
 }
 
 alias cr="~/kernel-tools/codereview/upload.py --check-clang-format --check-eslint"
+alias activate="source python3-venv/bin/activate"

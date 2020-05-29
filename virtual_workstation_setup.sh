@@ -26,7 +26,7 @@ setup_bash() {
     # Check if we've already added server_bashrc to the user's bashrc
     grep server_bashrc ~/.bashrc
     ret=$?
-    if [[ $ret != 0 ]]; then
+    if [[ $ret = 0 ]]; then
         return
     fi
 
@@ -100,8 +100,9 @@ setup_cr() {
 }
 
 pushd $workdir
-    # /data should already exist.
-    mkdir -p /data/db
+    sudo mkdir -p /data/db
+    sudo chown ubuntu /data/db
+    ssh-keyscan github.com >> ~/.ssh/known_hosts
 
     setup_bash
     setup_master
