@@ -70,7 +70,7 @@ setup_44() {
 
     echo "Setting up the 4.4 branch..."
     pushd $workdir/mongo
-        git worktree $workdir/mongo-v44 v4.4
+        git worktree add $workdir/mongo-v44 v4.4
     popd
 
     pushd $workdir/mongo-v44
