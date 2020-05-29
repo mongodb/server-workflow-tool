@@ -100,6 +100,8 @@ setup_cr() {
 }
 
 pushd $workdir
+    source ~/.bashrc
+
     sudo mkdir -p /data/db
     sudo chown ubuntu /data/db
     ssh-keyscan github.com >> ~/.ssh/known_hosts
