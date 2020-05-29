@@ -109,4 +109,5 @@ pushd $workdir
     setup_bash
     setup_master
     setup_44
+    setup_cr
 popd
