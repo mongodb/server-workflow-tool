@@ -3,7 +3,7 @@
 export NINJA_STATUS='[%f/%t (%p) %es] '
 
 function buildninjaic() {
-    activate
+    source python3-venv/bin/activate
         ./buildscripts/scons.py  \
             CCFLAGS='-gsplit-dwarf' \
             --variables-files=etc/scons/mongodbtoolchain_stable_gcc.vars \

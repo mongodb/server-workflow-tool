@@ -47,7 +47,7 @@ setup_master() {
         git clone git@github.com:10gen/mongo-enterprise-modules.git src/mongo/db/modules/enterprise
 
         /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
-        activate
+        source python3-venv/bin/activate
                 
             # The bundled pip version is very old (10.0.1), upgrade to (20.0+).
             python -m pip install --upgrade pip
@@ -78,7 +78,7 @@ setup_44() {
         git clone git@github.com:10gen/mongo-enterprise-modules.git -b v4.4 src/mongo/db/modules/enterprise
 
         /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
-        activate
+        source python3-venv/bin/activate
                 
             # The bundled pip version is very old (10.0.1), upgrade to (20.0+).
             python -m pip install --upgrade pip
