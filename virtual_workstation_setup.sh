@@ -30,7 +30,7 @@ setup_bash() {
         return
     fi
 
-    echo "source $HOME/server-workflow-tool/server_bashrc.sh" >> ~/.bashrc
+    echo -e "\nsource $HOME/server-workflow-tool/server_bashrc.sh" >> ~/.bashrc
 
     source ~/.bashrc
 }
