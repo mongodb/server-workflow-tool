@@ -24,16 +24,16 @@ popd () {
 }
 
 setup_bash() {
-    # Check if we've already added server_bashrc to the user's bashrc
-    grep server_bashrc ~/.bashrc
+    # Check if we've already added server_bashrc to the user's bash_profile
+    grep server_bashrc ~/.bash_profile
     ret=$?
     if [[ $ret = 0 ]]; then
         return
     fi
 
-    echo -e "\nsource $HOME/server-workflow-tool/server_bashrc.sh" >> ~/.bashrc
+    echo -e "\nsource $HOME/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
 
-    source ~/.bashrc
+    source ~/.bash_profile
 }
 
 setup_master() {
