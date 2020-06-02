@@ -1,9 +1,10 @@
 workdir=$1
 
-if [[ ! -f ~/.ssh/id_rsa ]]; then
-    echo "Please ensure your ssh keys are set up in ~/.ssh/id_rsa and ~/.ssh/id_rsa.pub; see the onboarding wiki page for more info"
-    exit 1
-fi
+# TODO: Support forwarded SSH keys
+# if [[ ! -f ~/.ssh/id_rsa ]]; then
+#     echo "Please ensure your ssh keys are set up in ~/.ssh/id_rsa and ~/.ssh/id_rsa.pub; see the onboarding wiki page for more info"
+#     exit 1
+# fi
 
 if [[ -z $(git config --get user.name) ]]; then
     echo "Please ensure your git credentials are set up; see the onboarding wiki page for more info"
