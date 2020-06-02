@@ -31,7 +31,7 @@ setup_bash() {
         return
     fi
 
-    echo -e "\nsource $HOME/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
+    echo -e "\nsource $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
 
     source ~/.bash_profile
 }
