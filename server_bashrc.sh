@@ -14,3 +14,7 @@ function buildninjaic() {
 
 alias cr="~/kernel-tools/codereview/upload.py --check-clang-format --check-eslint"
 alias activate="source python3-venv/bin/activate"
+
+# vim extension setup
+export PATH="/opt/cmake/bin:/opt/rtags-2.38/bin:${PATH}"
+export MONGO_REPO="$HOME/mongo"
