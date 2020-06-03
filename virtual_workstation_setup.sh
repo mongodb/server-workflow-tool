@@ -55,7 +55,7 @@ setup_master() {
 
             python -m pip install -r etc/pip/dev-requirements.txt
 
-            python buildscripts/scons.py compiledb
+            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
 
             buildninjaic
         deactivate
@@ -86,7 +86,7 @@ setup_44() {
 
             python -m pip install -r etc/pip/dev-requirements.txt
 
-            python buildscripts/scons.py compiledb
+            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
 
             buildninjaic
         deactivate
