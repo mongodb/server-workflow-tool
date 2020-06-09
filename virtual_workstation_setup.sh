@@ -100,6 +100,13 @@ setup_cr() {
     popd
 }
 
+setup_gdb() {
+    pushd $workdir
+        git clone git@github.com:ruediger/Boost-Pretty-Printer.git
+        echo "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit" >> ~/.gdbinit
+    popd
+}
+
 pushd $workdir
     source ~/.bashrc
 
@@ -111,4 +118,5 @@ pushd $workdir
     setup_master
     setup_44
     setup_cr
+    setup_gdb
 popd

@@ -15,6 +15,10 @@ function buildninjaic() {
 alias cr="~/kernel-tools/codereview/upload.py --check-clang-format --check-eslint"
 alias activate="source python3-venv/bin/activate"
 
+# gdb setup
+# Ensure the toolchain gdb is used; it's in a separate directory from the other toolchain executables.
+export PATH="/opt/mongodbtoolchain/gdb/bin:${PATH}"
+
 # vim extension setup
 export PATH="/opt/cmake/bin:/opt/rtags-2.38/bin:${PATH}"
 export MONGO_REPO="$HOME/mongo"
