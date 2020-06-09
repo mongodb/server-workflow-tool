@@ -16,6 +16,7 @@ alias cr="~/kernel-tools/codereview/upload.py --check-clang-format --check-eslin
 alias activate="source python3-venv/bin/activate"
 
 # gdb setup
+# Ensure the toolchain gdb is used; it's in a separate directory from the other toolchain executables.
 export PATH="/opt/mongodbtoolchain/gdb/bin:${PATH}"
 
 # vim extension setup
