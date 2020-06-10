@@ -104,6 +104,10 @@ setup_gdb() {
     pushd $workdir
         git clone git@github.com:ruediger/Boost-Pretty-Printer.git
         echo "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit" >> ~/.gdbinit
+
+        # gdb doesn't use the virtualenv
+        # we need to install pymongo in the toolchain python it was linked with
+        /opt/mongodbtoolchain/v3/bin/python3 -m pip install pymongo
     popd
 }
 
