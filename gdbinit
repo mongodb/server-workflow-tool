@@ -12,8 +12,11 @@ source .gdbinit
 # register boost pretty printers
 python
 import sys, pathlib
-sys.path.insert(1, os.path.join(pathlib.Path.home(), 'Boost-Pretty-Printer'))
-import boost
-boost.register_printers(boost_version=(1,60,0))
-print("Loaded boost pretty printers")
+try:
+    sys.path.insert(1, os.path.join(pathlib.Path.home(), 'Boost-Pretty-Printer'))
+    import boost
+    boost.register_printers(boost_version=(1,60,0))
+    print("Loaded boost pretty printers")
+except:
+    print("Failed to load the boost pretty printers")
 end
