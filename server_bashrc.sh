@@ -23,6 +23,6 @@ export PATH="/opt/mongodbtoolchain/gdb/bin:${PATH}"
 export PATH="/opt/cmake/bin:/opt/rtags-2.38/bin:${PATH}"
 export MONGO_REPO="$HOME/mongo"
 
-# undo db setup
+# UndoDB setup
 export PATH="/opt/undodb-5/bin:${PATH}"
 export MANPATH="/opt/undodb-5/man:${MANPATH}"
