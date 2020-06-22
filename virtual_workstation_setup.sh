@@ -23,6 +23,15 @@ popd () {
     command popd "$@" > /dev/null
 }
 
+evg_user() {
+    local evg_username=$(cat $HOME/.evergreen.yml | grep -Po '(?<=user: ).*')
+    if [ -z $evg_username ]; then
+        evg_username=$(cat $HOME/.evergreen.yml | grep -Po '(?<=user:).*')
+    fi
+
+    echo $evg_username
+}
+
 setup_bash() {
     # Check if we've already added server_bashrc to the user's bash_profile
     grep server_bashrc ~/.bash_profile
@@ -49,7 +58,7 @@ setup_master() {
 
         /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
         source python3-venv/bin/activate
-                
+
             # The bundled pip version is very old (10.0.1), upgrade to (20.0+).
             python -m pip install --upgrade pip
 
@@ -80,7 +89,7 @@ setup_44() {
 
         /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
         source python3-venv/bin/activate
-                
+
             # The bundled pip version is very old (10.0.1), upgrade to (20.0+).
             python -m pip install --upgrade pip
 
@@ -107,6 +116,24 @@ setup_gdb() {
     popd
 }
 
+setup_undodb() {
+    if [[ ! -d '/opt/undodb-5' ]]; then
+        return
+    fi
+
+    local evg_username=$(evg_user)
+    if [ -z $evg_username ]; then
+        echo "UndoDB: can't figure out what your SSO username is. Set the 'UNDO_user' environment variable to your Okta username in your shell's rc file before using UndoDB"
+        echo "ex: export UNDO_user='john.doe'"
+        return
+    fi
+
+    echo "export UNDO_user='$evg_username'" >> ~/.bashrc
+    if [[ -f ~/.zshrc ]]; then
+        echo "export UNDO_user='$evg_username'" >> ~/.zshrc
+    fi
+}
+
 pushd $workdir
     source ~/.bashrc
 
@@ -119,4 +146,5 @@ pushd $workdir
     setup_44
     setup_cr
     setup_gdb
+    setup_undodb
 popd
