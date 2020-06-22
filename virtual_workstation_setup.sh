@@ -128,9 +128,9 @@ setup_undodb() {
         return
     fi
 
-    echo "export UNDO_user='$evg_username'" >> ~/.bashrc
+    echo "\nexport UNDO_user='$evg_username'" >> ~/.bashrc
     if [[ -f ~/.zshrc ]]; then
-        echo "export UNDO_user='$evg_username'" >> ~/.zshrc
+        echo "\nexport UNDO_user='$evg_username'" >> ~/.zshrc
     fi
 }
 
