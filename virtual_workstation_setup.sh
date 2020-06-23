@@ -32,6 +32,32 @@ evg_user() {
     echo $evg_username
 }
 
+# arg1: file
+# arg2: a unique marker text for the block being appended
+# arg3: block to inject
+# arg4: if non empty, do not append if the file does not exist
+idem_file_append() {
+    if [ -z $1 ]; then
+        return 1
+    fi
+    if [ ! -f $1 && -z $4 ]; then
+        return
+    fi
+    if [ -z $2 ]; then
+        return 2
+    fi
+    if [ -z $3 ]; then
+        return 3
+    fi
+    local start_marker="# BEGIN $2"
+    local end_marker="# END $2"
+    if ! grep "^$start_marker" $1; then
+        echo -e "\n$start_marker" >> $1
+        echo -e "$3" >> $1
+        echo -e "\n$end_marker" >> $1
+    fi
+}
+
 setup_bash() {
     # Check if we've already added server_bashrc to the user's bash_profile
     grep server_bashrc ~/.bash_profile
@@ -130,16 +156,10 @@ setup_undodb() {
         return 1
     fi
 
-    if ! grep '^# BEGIN UndoDB Licensing' ~/.bashrc; then
-        echo "\n# BEGIN UndoDB License Config" >> ~/.bashrc
-        echo "export UNDO_user='$evg_username'" >> ~/.bashrc
-        echo "\n# END UndoDB License Config" >> ~/.bashrc
-    fi
-    if [[ -f ~/.zshrc ]] && ! grep '^# BEGIN UndoDB Licensing' ~/.zshrc; then
-        echo "\n# BEGIN UndoDB License Config" >> ~/.zshrc
-        echo "export UNDO_user='$evg_username'" >> ~/.zshrc
-        echo "\n# END UndoDB License Config" >> ~/.zshrc
-    fi
+    local marker="UndoDB License Config"
+    local block="export UNDO_user='$evg_username'"
+    idem_file_append ~/.bashrc $marker $block
+    idem_file_append ~/.zshrc $marker $block 1
 }
 
 pushd $workdir
