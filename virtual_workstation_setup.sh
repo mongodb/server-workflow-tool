@@ -41,7 +41,7 @@ idem_file_append() {
     if [[ -z $1 ]]; then
         return 1
     fi
-    if [[ ! -f $1 && -z $4 ]]; then
+    if [[ ! -f $1 && ! -z $4 ]]; then
         return
     fi
     if [[ -z $2 ]]; then
