@@ -31,7 +31,9 @@ setup_bash() {
         return
     fi
 
-    echo -e "\nsource $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
+    read -p "JIRA username: " jira_username
+    echo -e "\nexport JIRA_USERNAME=$jira_username" >> ~/.bash_profile
+    echo "source $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
 
     source ~/.bash_profile
 }
