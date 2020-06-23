@@ -37,16 +37,16 @@ evg_user() {
 # arg3: block to inject
 # arg4: if non empty, do not append if the file does not exist
 idem_file_append() {
-    if [ -z $1 ]; then
+    if [[ -z $1 ]]; then
         return 1
     fi
     if [[ ! -f $1 && -z $4 ]]; then
         return
     fi
-    if [ -z $2 ]; then
+    if [[ -z $2 ]]; then
         return 2
     fi
-    if [ -z $3 ]; then
+    if [[ -z $3 ]]; then
         return 3
     fi
     local start_marker="# BEGIN $2"
@@ -54,7 +54,7 @@ idem_file_append() {
     if ! grep "^$start_marker" $1; then
         echo -e "\n$start_marker" >> $1
         echo -e "$3" >> $1
-        echo -e "\n$end_marker" >> $1
+        echo -e "$end_marker" >> $1
     fi
 }
 
@@ -158,7 +158,7 @@ setup_undodb() {
 
     local marker="UndoDB License Config"
     local block="export UNDO_user='$evg_username'"
-    idem_file_append ~/.bashrc $marker $block
+    idem_file_append ~/.bashrc "$marker $block
     idem_file_append ~/.zshrc $marker $block 1
 }
 
