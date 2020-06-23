@@ -72,7 +72,7 @@ setup_bash() {
     if [[ -f ~/.bashrc ]]; then
         source ~/.bashrc
     fi
-    BLOCK
+BLOCK
 
     idem_file_append ~/.bash_profile "Source .bashrc" "$block"
 
@@ -166,8 +166,8 @@ setup_undodb() {
 
     local marker="UndoDB License Config"
     local block="export UNDO_user='$evg_username'"
-    idem_file_append ~/.bashrc "$marker $block
-    idem_file_append ~/.zshrc $marker $block 1
+    idem_file_append ~/.bashrc "$marker" "$block"
+    idem_file_append ~/.zshrc "$marker" "$block" 1
 }
 
 pushd $workdir
