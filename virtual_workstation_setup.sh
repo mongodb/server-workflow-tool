@@ -105,12 +105,18 @@ setup_44() {
 
 setup_cr() {
     pushd $workdir
+        if [[ -d 'kernel-tools' ]]; then
+            return
+        fi
         git clone git@github.com:10gen/kernel-tools.git
     popd
 }
 
 setup_gdb() {
     pushd $workdir
+        if [[ -d 'Boost-Pretty-Printer' ]]; then
+            return
+        fi
         git clone git@github.com:ruediger/Boost-Pretty-Printer.git
         echo "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit" >> ~/.gdbinit
     popd
@@ -121,12 +127,18 @@ setup_undodb() {
     if [ -z $evg_username ]; then
         echo "UndoDB: can't figure out what your SSO username is. Set the 'UNDO_user' environment variable to your Okta username in your shell's rc file before using UndoDB"
         echo "ex: export UNDO_user='john.doe'"
-        return
+        return 1
     fi
 
-    echo "\nexport UNDO_user='$evg_username'" >> ~/.bashrc
-    if [[ -f ~/.zshrc ]]; then
-        echo "\nexport UNDO_user='$evg_username'" >> ~/.zshrc
+    if ! grep '^# BEGIN UndoDB Licensing' ~/.bashrc; then
+        echo "\n# BEGIN UndoDB License Config" >> ~/.bashrc
+        echo "export UNDO_user='$evg_username'" >> ~/.bashrc
+        echo "\n# END UndoDB License Config" >> ~/.bashrc
+    fi
+    if [[ -f ~/.zshrc ]] && ! grep '^# BEGIN UndoDB Licensing' ~/.zshrc; then
+        echo "\n# BEGIN UndoDB License Config" >> ~/.zshrc
+        echo "export UNDO_user='$evg_username'" >> ~/.zshrc
+        echo "\n# END UndoDB License Config" >> ~/.zshrc
     fi
 }
 
