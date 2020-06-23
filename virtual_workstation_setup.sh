@@ -1,3 +1,4 @@
+# Operations in this file should be idempotent
 workdir=$1
 
 # TODO: Support forwarded SSH keys
@@ -62,11 +63,18 @@ setup_bash() {
     # Check if we've already added server_bashrc to the user's bash_profile
     grep server_bashrc ~/.bash_profile
     ret=$?
-    if [[ $ret = 0 ]]; then
-        return
+    if [[ $ret != 0 ]]; then
+        echo -e "\nsource $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
     fi
 
-    echo -e "\nsource $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
+    # Bash profile should source .bashrc
+    local block=<<-BLOCK
+    if [[ -f ~/.bashrc ]]; then
+        source ~/.bashrc
+    fi
+    BLOCK
+
+    idem_file_append ~/.bash_profile "Source .bashrc" "$block"
 
     source ~/.bash_profile
 }
