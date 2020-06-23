@@ -25,12 +25,12 @@ popd () {
 }
 
 evg_user() {
-    local evg_username=$(cat $HOME/.evergreen.yml | grep -Po '(?<=user: ).*')
-    if [ -z $evg_username ]; then
-        evg_username=$(cat $HOME/.evergreen.yml | grep -Po '(?<=user:).*')
+    local evg_username=$(grep -Po '(?<=user: ).*' "$HOME/.evergreen.yml")
+    if [ -z "$evg_username" ]; then
+        evg_username=$(grep -Po '(?<=user:).*' "$HOME/.evergreen.yml")
     fi
 
-    echo $evg_username
+    echo "$evg_username"
 }
 
 # arg1: file
@@ -41,7 +41,7 @@ idem_file_append() {
     if [[ -z $1 ]]; then
         return 1
     fi
-    if [[ ! -f $1 && ! -z $4 ]]; then
+    if [[ ! -f $1 && -n $4 ]]; then
         return
     fi
     if [[ -z $2 ]]; then
@@ -52,10 +52,10 @@ idem_file_append() {
     fi
     local start_marker="# BEGIN $2"
     local end_marker="# END $2"
-    if ! grep "^$start_marker" $1; then
-        echo -e "\n$start_marker" >> $1
-        echo -e "$3" >> $1
-        echo -e "$end_marker" >> $1
+    if ! grep "^$start_marker" "$1"; then
+        echo -e "\n$start_marker" >> "$1"
+        echo -e "$3" >> "$1"
+        echo -e "$end_marker" >> "$1"
     fi
 }
 
@@ -86,7 +86,7 @@ setup_master() {
 
     echo "Setting up the mongo repo..."
     git clone git@github.com:mongodb/mongo.git
-    pushd $workdir/mongo
+    pushd "$workdir/mongo"
         mkdir -p src/mongo/db/modules
         git clone git@github.com:10gen/mongo-enterprise-modules.git src/mongo/db/modules/enterprise
 
@@ -113,11 +113,11 @@ setup_44() {
     fi
 
     echo "Setting up the 4.4 branch..."
-    pushd $workdir/mongo
-        git worktree add $workdir/mongo-v44 v4.4
+    pushd "$workdir/mongo"
+        git worktree add "$workdir/mongo-v44 v4.4"
     popd
 
-    pushd $workdir/mongo-v44
+    pushd "$workdir/mongo-v44"
         mkdir -p src/mongo/db/modules
         git clone git@github.com:10gen/mongo-enterprise-modules.git -b v4.4 src/mongo/db/modules/enterprise
 
@@ -138,7 +138,7 @@ setup_44() {
 }
 
 setup_cr() {
-    pushd $workdir
+    pushd "$workdir"
         if [[ -d 'kernel-tools' ]]; then
             return
         fi
@@ -147,7 +147,7 @@ setup_cr() {
 }
 
 setup_gdb() {
-    pushd $workdir
+    pushd "$workdir"
         if [[ -d 'Boost-Pretty-Printer' ]]; then
             return
         fi
@@ -157,8 +157,9 @@ setup_gdb() {
 }
 
 setup_undodb() {
-    local evg_username=$(evg_user)
-    if [ -z $evg_username ]; then
+    local evg_username
+    evg_username=$(evg_user)
+    if [ -z "$evg_username" ]; then
         echo "UndoDB: can't figure out what your SSO username is. Set the 'UNDO_user' environment variable to your Okta username in your shell's rc file before using UndoDB"
         echo "ex: export UNDO_user='john.doe'"
         return 1
@@ -170,7 +171,7 @@ setup_undodb() {
     idem_file_append ~/.zshrc "$marker" "$block" 1
 }
 
-pushd $workdir
+pushd "$workdir"
     source ~/.bashrc
 
     sudo mkdir -p /data/db
