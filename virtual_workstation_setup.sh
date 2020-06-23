@@ -30,12 +30,28 @@ setup_bash() {
     if [[ $ret = 0 ]]; then
         return
     fi
-
-    read -p "JIRA username: " jira_username
-    echo -e "\nexport JIRA_USERNAME=$jira_username" >> ~/.bash_profile
-    echo "source $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
-
+    
+    echo -e "\nsource $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
     source ~/.bash_profile
+}
+
+setup_jira() {
+    # Get the user's JIRA username
+    read -p "JIRA username: " jira_username
+    echo "export JIRA_USERNAME=$jira_username" >> ~/.bash_profile
+    export JIRA_USERNAME=$jira_username
+
+    # Set up the Jira OAuth Token Generator repo
+    git clone git@github.com:10gen/iteng-jira-oauth.git
+    mkdir iteng-jira-oauth/venv
+    python3 -m venv iteng-jira-oauth/venv
+
+    # Get credentials and store them in the system keyring
+    source iteng-jira-oauth/venv/bin/activate
+        python -m pip install --upgrade pip
+        python -m pip install -r iteng-jira-oauth/requirements.txt
+        python jira_credentials.py
+    deactivate
 }
 
 setup_master() {
@@ -117,6 +133,7 @@ pushd $workdir
     ssh-keyscan github.com >> ~/.ssh/known_hosts
 
     setup_bash
+    setup_jira
     setup_master
     setup_44
     setup_cr
