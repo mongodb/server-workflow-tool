@@ -1,4 +1,5 @@
-# Operations in this file should be idempotent
+# Operations in this file should be idempotent-ish. At the very least, make
+# sure your code doesn't do duplicate work/clobber existing files on rerun
 workdir=$1
 
 # TODO: Support forwarded SSH keys
@@ -81,6 +82,7 @@ BLOCK
 
 setup_master() {
     if [[ -d mongo ]]; then
+        echo "'mongo' dir exists; skipping setup"
         return
     fi
 
@@ -109,6 +111,7 @@ setup_master() {
 
 setup_44() {
     if [[ -d mongo-v44 ]]; then
+        echo "'mongo-v44' dir exists; skipping setup"
         return
     fi
 
@@ -140,6 +143,7 @@ setup_44() {
 setup_cr() {
     pushd "$workdir"
         if [[ -d 'kernel-tools' ]]; then
+            echo "'kernel-tools' dir exists; skipping setup"
             return
         fi
         git clone git@github.com:10gen/kernel-tools.git
@@ -149,6 +153,7 @@ setup_cr() {
 setup_gdb() {
     pushd "$workdir"
         if [[ -d 'Boost-Pretty-Printer' ]]; then
+            echo "'Boost-Pretty-Printer' dir exists; skipping setup"
             return
         fi
         git clone git@github.com:ruediger/Boost-Pretty-Printer.git
@@ -166,7 +171,10 @@ setup_undodb() {
     fi
 
     local marker="UndoDB License Config"
-    local block="export UNDO_user='$evg_username'"
+    local block=<<-BLOCK
+    export UNDO_user='$evg_username'
+    alias udb='/opt/undodb-5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
+BLOCK
     idem_file_append ~/.bashrc "$marker" "$block"
     idem_file_append ~/.zshrc "$marker" "$block" 1
 }
