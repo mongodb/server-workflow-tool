@@ -12,7 +12,7 @@ function buildninjaic() {
         build.ninja
 }
 
-alias cr="~/kernel-tools/codereview/upload.py --check-clang-format --check-eslint --jira_user=$JIRA_USERNAME"
+alias cr="dbus-run-session -- python ~/mongodb-mongo-master/server-workflow-tool/jira_credentials.py create-cr"
 alias activate="source python3-venv/bin/activate"
 
 # gdb setup
