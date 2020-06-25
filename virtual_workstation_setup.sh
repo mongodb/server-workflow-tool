@@ -53,6 +53,7 @@ setup_master() {
             python -m pip install --upgrade pip
 
             python -m pip install -r etc/pip/dev-requirements.txt
+            python -m pip install keyring
 
             python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
 
@@ -84,6 +85,7 @@ setup_44() {
             python -m pip install --upgrade pip
 
             python -m pip install -r etc/pip/dev-requirements.txt
+            python -m pip install keyring
 
             python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
 
