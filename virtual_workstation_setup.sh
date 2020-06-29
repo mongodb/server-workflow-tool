@@ -174,10 +174,15 @@ setup_gdb() {
     pushd "$workdir"
         if [[ -d 'Boost-Pretty-Printer' ]]; then
             echo "'Boost-Pretty-Printer' dir exists; skipping setup"
-            return 0
+        else
+            git clone git@github.com:ruediger/Boost-Pretty-Printer.git
         fi
-        git clone git@github.com:ruediger/Boost-Pretty-Printer.git
-        echo "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit" >> ~/.gdbinit
+
+        # the original version of this script just appended this line, so we
+        # have to grep for it manually
+        if ! grep -q "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit"; then
+            idem_file_append ~/.gdbinit "Server Workflow Tool gdbinit" "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit"
+        fi
     popd
 }
 
