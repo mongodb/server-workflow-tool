@@ -208,7 +208,6 @@ pushd "$workdir"
     ssh-keyscan github.com >> ~/.ssh/known_hosts
 
     setup_bash
-    echo "maybe?"
     setup_master
     setup_44
     setup_cr
