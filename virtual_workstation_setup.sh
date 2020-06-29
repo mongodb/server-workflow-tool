@@ -1,8 +1,9 @@
 # Operations in this file should be idempotent-ish. At the very least, make
 # sure your code doesn't do duplicate work/clobber existing files on rerun
+set +o errexit
 workdir=$1
 
-# TODO: Support forwarded SSH keys
+# TODO: Support forwarded SSH keys (check if SSH_AUTH_SOCK is not empty?)
 # if [[ ! -f ~/.ssh/id_rsa ]]; then
 #     echo "Please ensure your ssh keys are set up in ~/.ssh/id_rsa and ~/.ssh/id_rsa.pub; see the onboarding wiki page for more info"
 #     exit 1
@@ -117,7 +118,7 @@ setup_44() {
 
     echo "Setting up the 4.4 branch..."
     pushd "$workdir/mongo"
-        git worktree add "$workdir/mongo-v44 v4.4"
+        git worktree add "$workdir/mongo-v44" v4.4
     popd
 
     pushd "$workdir/mongo-v44"
