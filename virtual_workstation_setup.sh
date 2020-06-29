@@ -74,9 +74,7 @@ idem_file_append() {
 
 setup_bash() {
     # Check if we've already added server_bashrc to the user's bash_profile
-    grep server_bashrc ~/.bash_profile
-    ret=$?
-    if [[ $ret != 0 ]]; then
+    if ! grep server_bashrc ~/.bash_profile; then
         echo -e "\nsource $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
     fi
 
