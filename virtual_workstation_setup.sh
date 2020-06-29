@@ -54,6 +54,7 @@ setup_master() {
             python -m pip install --upgrade pip
 
             python -m pip install -r etc/pip/dev-requirements.txt
+            python -m pip install keyring
 
             python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
 
@@ -85,6 +86,7 @@ setup_44() {
             python -m pip install --upgrade pip
 
             python -m pip install -r etc/pip/dev-requirements.txt
+            python -m pip install keyring
 
             python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
 
@@ -97,6 +99,29 @@ setup_44() {
 setup_cr() {
     pushd $workdir
         git clone git@github.com:10gen/kernel-tools.git
+    popd
+}
+
+setup_jira_auth() {
+    # Get the user's JIRA username
+    read -p "JIRA username (from https://jira.mongodb.org/secure/ViewProfile.jspa): " jira_username
+    echo "export JIRA_USERNAME=$jira_username" >> ~/.bash_profile
+    export JIRA_USERNAME=$jira_username
+    echo "Wrote username \"$JIRA_USERNAME\" to ~/.bash_profile"
+
+    # Set up the Jira OAuth Token Generator repo
+    pushd $HOME/mongodb-mongo-master
+        git clone git@github.com:10gen/iteng-jira-oauth.git
+        mkdir iteng-jira-oauth/venv
+        /opt/mongodbtoolchain/v3/bin/python3 -m venv iteng-jira-oauth/venv
+
+        # Get credentials and store them in the system keyring
+        source iteng-jira-oauth/venv/bin/activate
+            python -m pip install --upgrade pip
+            python -m pip install -r iteng-jira-oauth/requirements.txt
+            python -m pip install keyring psutil
+            dbus-run-session -- python server-workflow-tool/jira_credentials.py set-password $PWD/iteng-jira-oauth
+        deactivate
     popd
 }
 
@@ -118,5 +143,6 @@ pushd $workdir
     setup_master
     setup_44
     setup_cr
+    setup_jira_auth
     setup_gdb
 popd
