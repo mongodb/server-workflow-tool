@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 import psutil
-from argparse import ArgumentParser
+import argparse
 
 
 def set_password(args):
@@ -33,16 +33,19 @@ def create_cr(args):
 
     sys.path.append(os.path.expanduser(os.path.join("~", "kernel-tools", "codereview")))
     upload = importlib.import_module('upload')
-    upload.RealMain(["--check-clang-format", "--check-eslint", "--jira_user={}".format(os.getenv('JIRA_USERNAME'))])
+    upload.RealMain(["--check-clang-format", "--check-eslint", "--jira_user={}".format(os.getenv('JIRA_USERNAME'))] + args.additional_args)
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
+    parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title="subcommands")
     pw_command = subparsers.add_parser("set-password", help="get a JIRA oauth token and store in the keyring")
     pw_command.set_defaults(func=set_password)
     pw_command.add_argument("generator_path", metavar="generator-path", help="path to the iteng-jira-repo")
 
-    subparsers.add_parser("create-cr", help="open a CR").set_defaults(func=create_cr)
+    cr_command = subparsers.add_parser("create-cr", help="open a CR")
+    cr_command.set_defaults(func=create_cr)
+    cr_command.add_argument("additional_args", metavar="additional-args", nargs=argparse.REMAINDER, help="arguments to pass to upload.py")
+
     args = parser.parse_args()
     args.func(args)
