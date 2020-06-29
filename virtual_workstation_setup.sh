@@ -95,7 +95,7 @@ BLOCK
 setup_master() {
     if [[ -d mongo ]]; then
         echo "'mongo' dir exists; skipping setup"
-        return 0
+        return
     fi
 
     echo "Setting up the mongo repo..."
@@ -124,7 +124,7 @@ setup_master() {
 setup_44() {
     if [[ -d mongo-v44 ]]; then
         echo "'mongo-v44' dir exists; skipping setup"
-        return 0
+        return
     fi
 
     echo "Setting up the 4.4 branch..."
@@ -156,7 +156,7 @@ setup_cr() {
     pushd "$workdir"
         if [[ -d 'kernel-tools' ]]; then
             echo "'kernel-tools' dir exists; skipping setup"
-            return 0
+            return
         fi
         git clone git@github.com:10gen/kernel-tools.git
     popd
