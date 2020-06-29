@@ -1,6 +1,6 @@
 # Operations in this file should be idempotent-ish. At the very least, make
 # sure your code doesn't do duplicate work/clobber existing files on rerun
-set +o errexit
+set -o errexit
 workdir=$1
 
 # TODO: Support forwarded SSH keys (check if SSH_AUTH_SOCK is not empty?)
