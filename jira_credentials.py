@@ -9,7 +9,7 @@ import psutil
 import argparse
 
 
-def set_password(args):
+def set_password(args, extra_args):
     os.chdir(args.generator_path)
     sys.path.append(args.generator_path)
     tokengen = importlib.import_module('jira-token-gen')
@@ -27,13 +27,16 @@ def set_password(args):
     print("Password set in keyring for server: {}, user: {}".format(server, user))
 
 
-def create_cr(args):
+def create_cr(args, extra_args):
     if not "gnome-keyring-daemon" in (p.name() for p in psutil.process_iter()):
         subprocess.run(["gnome-keyring-daemon", "--unlock"], input="password", text=True)
 
     sys.path.append(os.path.expanduser(os.path.join("~", "kernel-tools", "codereview")))
     upload = importlib.import_module('upload')
-    upload.RealMain(["--check-clang-format", "--check-eslint", "--jira_user={}".format(os.getenv('JIRA_USERNAME'))] + args.additional_args)
+    upload_args = ["--check-clang-format", "--check-eslint"]
+    if os.getenv('JIRA_USERNAME') is not None:
+        upload_args.append("--jira_user={}".format(os.getenv('JIRA_USERNAME')))
+    upload.RealMain(upload_args + extra_args)
 
 
 if __name__ == '__main__':
@@ -45,7 +48,6 @@ if __name__ == '__main__':
 
     cr_command = subparsers.add_parser("create-cr", help="open a CR")
     cr_command.set_defaults(func=create_cr)
-    cr_command.add_argument("additional_args", metavar="additional-args", nargs=argparse.REMAINDER, help="arguments to pass to upload.py")
 
-    args = parser.parse_args()
-    args.func(args)
+    known_args, extra_args = parser.parse_known_args()
+    known_args.func(known_args, extra_args)
