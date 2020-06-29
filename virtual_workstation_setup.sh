@@ -14,6 +14,16 @@ if [[ -z $(git config --get user.name) ]]; then
     exit 1
 fi
 
+test_github_keys=$(ssh -T git@github.com | grep -q "You've successfully authenticated, but GitHub does not provide shell access")
+if ! $test_github_keys; then
+    echo "Please ensure your GitHub SSH keys have been set up; see the onboarding wiki page for more info"
+    if [[ -f ~/.ssh/id_rsa.pub ]]; then
+        echo "Your SSH Public Key:"
+        cat ~/.ssh/id_rsa.pub
+        exit 1
+    fi
+fi
+
 if [[ -z "$1" ]]; then
   workdir=$HOME
 fi
