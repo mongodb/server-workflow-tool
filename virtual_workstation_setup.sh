@@ -106,8 +106,8 @@ setup_jira_auth() {
     # Get the user's JIRA username
     read -p "JIRA username (from https://jira.mongodb.org/secure/ViewProfile.jspa): " jira_username
     echo "export JIRA_USERNAME=$jira_username" >> ~/.bash_profile
-    echo "Wrote username \"$JIRA_USERNAME\" to ~/.bash_profile"
     export JIRA_USERNAME=$jira_username
+    echo "Wrote username \"$JIRA_USERNAME\" to ~/.bash_profile"
 
     # Set up the Jira OAuth Token Generator repo
     pushd $HOME/mongodb-mongo-master
