@@ -3,12 +3,6 @@
 set -o errexit
 workdir=$1
 
-# TODO: Support forwarded SSH keys (check if SSH_AUTH_SOCK is not empty?)
-# if [[ ! -f ~/.ssh/id_rsa ]]; then
-#     echo "Please ensure your ssh keys are set up in ~/.ssh/id_rsa and ~/.ssh/id_rsa.pub; see the onboarding wiki page for more info"
-#     exit 1
-# fi
-
 if [[ -z $(git config --get user.name) ]]; then
     echo "Please ensure your git credentials are set up; see the onboarding wiki page for more info"
     exit 1
@@ -18,10 +12,8 @@ fi
 # returns 1, so it can't be used alone
 if ! $(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -T git@github.com 2>&1 | grep -q "You've successfully authenticated, but GitHub does not provide shell access"); then
     echo "Please ensure your GitHub SSH keys have been set up; see the onboarding wiki page for more info"
-    if [[ -f ~/.ssh/id_*.pub ]]; then
-        echo "Your SSH Public Keys:"
-        cat ~/.ssh/id_*.pub
-    fi
+    echo "Your SSH Public Keys:"
+    cat ~/.ssh/id_*.pub
     exit 1
 fi
 
