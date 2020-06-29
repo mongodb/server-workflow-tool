@@ -80,8 +80,11 @@ idem_file_append() {
 # setup_bash will make bash_profile source .bashrc (see the "may include" in
 # the above diagram), and the .bashrc will source the server_bashrc.sh file
 # in this repo.
-# This ensures that no matter which kind of shell you're using, the
-# server_bashrc.sh has been sourced.
+# This ensures that no matter which kind of interactive shell you're using, the
+# server_bashrc.sh has been sourced. While we technically could just source
+# server_bashrc.sh in both .bash_profile, and .bashrc, this could break if
+# something gets added to it that cannot be sourced more than once in the same
+# session.
 setup_bash() {
     # Bash profile should source .bashrc
     local block=<<-BLOCK
