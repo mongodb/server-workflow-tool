@@ -86,7 +86,7 @@ setup_bash() {
 BLOCK
 
     idem_file_append ~/.bash_profile "Source .bashrc" "$block"
-    idem_file_append ~/.bash_profile "Source server .bashrc" "source $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
+    idem_file_append ~/.bashrc "Source server .bashrc" "source $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
 
     source ~/.bash_profile
 }
