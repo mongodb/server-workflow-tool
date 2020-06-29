@@ -14,14 +14,15 @@ if [[ -z $(git config --get user.name) ]]; then
     exit 1
 fi
 
-test_github_keys=$(ssh -T git@github.com | grep -q "You've successfully authenticated, but GitHub does not provide shell access")
-if ! $test_github_keys; then
+# SSH into GitHub and check for the success message. The SSH command
+# returns 1, so it can't be used alone
+if ! $(ssh -o ConnectTimeout=5 -T git@github.com 2>&1 | grep -q "You've successfully authenticated, but GitHub does not provide shell access"); then
     echo "Please ensure your GitHub SSH keys have been set up; see the onboarding wiki page for more info"
-    if [[ -f ~/.ssh/id_rsa.pub ]]; then
-        echo "Your SSH Public Key:"
-        cat ~/.ssh/id_rsa.pub
-        exit 1
+    if [[ -f ~/.ssh/id_*.pub ]]; then
+        echo "Your SSH Public Keys:"
+        cat ~/.ssh/id_*.pub
     fi
+    exit 1
 fi
 
 if [[ -z "$1" ]]; then
