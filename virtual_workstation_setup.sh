@@ -72,12 +72,17 @@ idem_file_append() {
     fi
 }
 
-setup_bash() {
-    # Check if we've already added server_bashrc to the user's bash_profile
-    if ! grep server_bashrc ~/.bash_profile; then
-        echo -e "\nsource $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh" >> ~/.bash_profile
-    fi
+# Here's a quick explanation of what's going on here for the next soul here:
+# If you like visuals instead: https://shreevatsa.files.wordpress.com/2008/03/bashstartupfiles1.png
+# bash_profile is generally invoked once per login shell.
+# bashrc is invoked for interactive, non-login shells
 
+# setup_bash will make bash_profile source .bashrc (see the "may include" in
+# the above diagram), and the .bashrc will source the server_bashrc.sh file
+# in this repo.
+# This ensures that no matter which kind of shell you're using, the
+# server_bashrc.sh has been sourced.
+setup_bash() {
     # Bash profile should source .bashrc
     local block=<<-BLOCK
     if [[ -f ~/.bashrc ]]; then
