@@ -112,11 +112,11 @@ setup_jira_auth() {
     # Set up the Jira OAuth Token Generator repo
     pushd $HOME/mongodb-mongo-master
         git clone git@github.com:10gen/iteng-jira-oauth.git
-        mkdir venv
-        /opt/mongodbtoolchain/v3/bin/python3 -m venv venv
+        mkdir iteng-jira-oauth/venv
+        /opt/mongodbtoolchain/v3/bin/python3 -m venv iteng-jira-oauth/venv
 
         # Get credentials and store them in the system keyring
-        source venv/bin/activate
+        source iteng-jira-oauth/venv/bin/activate
             python -m pip install --upgrade pip
             python -m pip install -r iteng-jira-oauth/requirements.txt
             python -m pip install keyring psutil
