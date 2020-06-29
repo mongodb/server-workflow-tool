@@ -87,10 +87,10 @@ idem_file_append() {
 # session.
 setup_bash() {
     # Bash profile should source .bashrc
-    local block=$(cat <<-BLOCK
-    if [[ -f ~/.bashrc ]]; then
-        source ~/.bashrc
-    fi
+    local block=$(cat <<BLOCK
+if [[ -f ~/.bashrc ]]; then
+    source ~/.bashrc
+fi
 BLOCK
     )
 
@@ -191,9 +191,9 @@ setup_undodb() {
     fi
 
     local marker="UndoDB License Config"
-    local block=$(cat <<-BLOCK
-    export UNDO_user='$evg_username'
-    alias udb='/opt/undodb-5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
+    local block=$(cat <<BLOCK
+export UNDO_user='$evg_username'
+alias udb='/opt/undodb-5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
 BLOCK
     )
     idem_file_append ~/.bashrc "$marker" "$block"
