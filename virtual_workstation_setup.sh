@@ -86,6 +86,7 @@ setup_bash() {
 BLOCK
 
     idem_file_append ~/.bash_profile "Source .bashrc" "$block"
+    idem_file_append ~/.bash_profile "Source server .bashrc" "source $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
 
     source ~/.bash_profile
 }
@@ -202,4 +203,8 @@ pushd "$workdir"
     setup_cr
     setup_gdb
     setup_undodb
+
+    if grep -q server_bashrc ~/.bash_profile; then
+        echo "Please remove the line from your ~/.bash_profile that sources mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
+    fi
 popd
