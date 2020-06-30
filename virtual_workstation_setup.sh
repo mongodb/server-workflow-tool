@@ -15,7 +15,7 @@ if ! (echo "${github_test}" | grep -q "You've successfully authenticated, but Gi
     echo "Cannot login to GitHub via SSH"
     echo "Please ensure your GitHub SSH keys have been set up; see the onboarding wiki page for more info"
     echo "Your SSH Public Keys:"
-    cat ~/.ssh/id_*.pub
+    cat ~/.ssh/id_*.pub || true
     exit 1
 fi
 
