@@ -10,7 +10,9 @@ fi
 
 # SSH into GitHub and check for the success message. The SSH command
 # returns 1, so it can't be used alone
-if ! $(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -T git@github.com 2>&1 | grep -q "You've successfully authenticated, but GitHub does not provide shell access"); then
+github_test=$(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -T git@github.com 2>&1 || true)
+if ! (echo "${github_test}" | grep -q "You've successfully authenticated, but GitHub does not provide shell access"); then
+    echo "Cannot login to GitHub via SSH"
     echo "Please ensure your GitHub SSH keys have been set up; see the onboarding wiki page for more info"
     echo "Your SSH Public Keys:"
     cat ~/.ssh/id_*.pub
@@ -53,7 +55,7 @@ idem_file_append() {
     fi
     local start_marker="# BEGIN $2"
     local end_marker="# END $2"
-    if ! grep "^$start_marker" "$1"; then
+    if ! grep -q "^$start_marker" "$1"; then
         echo -e "\n$start_marker" >> "$1"
         echo -e "$3" >> "$1"
         echo -e "$end_marker" >> "$1"
@@ -101,7 +103,11 @@ setup_master() {
         git clone git@github.com:10gen/mongo-enterprise-modules.git src/mongo/db/modules/enterprise
 
         /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
+
+        # virtualenv doesn't like nounset
+        set +o nounset
         source python3-venv/bin/activate
+        set -o nounset
 
             # The bundled pip version is very old (10.0.1), upgrade to (20.0+).
             python -m pip install --upgrade pip
@@ -111,7 +117,10 @@ setup_master() {
             python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
 
             buildninjaic
+
+        set +o nounset
         deactivate
+        set -o nounset
 
     popd
     echo "Finished setting up the mongo repo..."
@@ -133,7 +142,11 @@ setup_44() {
         git clone git@github.com:10gen/mongo-enterprise-modules.git -b v4.4 src/mongo/db/modules/enterprise
 
         /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
+
+        # virtualenv doesn't like nounset
+        set +o nounset
         source python3-venv/bin/activate
+        set -o nounset
 
             # The bundled pip version is very old (10.0.1), upgrade to (20.0+).
             python -m pip install --upgrade pip
@@ -143,7 +156,10 @@ setup_44() {
             python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
 
             buildninjaic
+
+        set +o nounset
         deactivate
+        set -o nounset
     popd
     echo "Finished setting up the 4.4 branch"
 }
