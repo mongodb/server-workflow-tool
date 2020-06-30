@@ -1,7 +1,7 @@
 # Operations in this file should be idempotent-ish. At the very least, make
 # sure your code doesn't do duplicate work/clobber existing files on rerun
 set -euo pipefail
-workdir=$1
+workdir=${1:-$HOME}
 
 if [[ -z $(git config --get user.name) ]]; then
     echo "Please ensure your git credentials are set up; see the onboarding wiki page for more info"
@@ -15,10 +15,6 @@ if ! $(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -T git@github.com 2>&
     echo "Your SSH Public Keys:"
     cat ~/.ssh/id_*.pub
     exit 1
-fi
-
-if [[ -z "$1" ]]; then
-  workdir=$HOME
 fi
 
 pushd () {
