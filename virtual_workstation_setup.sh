@@ -27,6 +27,10 @@ popd () {
     command popd "$@" > /dev/null
 }
 
+silent_grep() {
+    command grep -q  > /dev/null >2&1 "$@"
+}
+
 evg_user() {
     local evg_username=$(grep -Po '(?<=user: ).*' "$HOME/.evergreen.yml")
     if [ -z "$evg_username" ]; then
@@ -44,7 +48,7 @@ idem_file_append() {
     if [[ -z "$1" ]]; then
         return 1
     fi
-    if [[ ! -f "$1" && -n "$4" ]]; then
+    if [[ ! -f "$1" && -n "${4-}" ]]; then
         return
     fi
     if [[ -z "$2" ]]; then
@@ -55,7 +59,7 @@ idem_file_append() {
     fi
     local start_marker="# BEGIN $2"
     local end_marker="# END $2"
-    if ! grep -q "^$start_marker" "$1" >2 /dev/null; then
+    if ! silent_grep "^$start_marker" "$1"; then
         {
             echo -e "\n$start_marker";
             echo -e "$3";
@@ -186,7 +190,7 @@ setup_gdb() {
 
         # the original version of this script just appended this line, so we
         # have to grep for it manually
-        if ! grep -q "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit" ~/.gdbinit; then
+        if ! silent_grep "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit" ~/.gdbinit; then
             idem_file_append ~/.gdbinit "Server Workflow Tool gdbinit" "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit"
         fi
     popd
@@ -225,7 +229,7 @@ pushd "$workdir"
     setup_gdb
     setup_undodb
 
-    if grep -q server_bashrc ~/.bash_profile; then
+    if silent_grep server_bashrc ~/.bash_profile; then
         echo "Please remove the line from your ~/.bash_profile that sources mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
         echo "^^^^^^^^^^^^^^^ READ ABOVE ^^^^^^^^^^^^^^^"
     fi
