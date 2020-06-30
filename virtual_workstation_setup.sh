@@ -41,24 +41,26 @@ evg_user() {
 # arg3: block to inject
 # arg4: if non empty, do not append if the file does not exist
 idem_file_append() {
-    if [[ -z $1 ]]; then
+    if [[ -z "$1" ]]; then
         return 1
     fi
-    if [[ ! -f $1 && -n $4 ]]; then
+    if [[ ! -f "$1" && -n "$4" ]]; then
         return
     fi
-    if [[ -z $2 ]]; then
+    if [[ -z "$2" ]]; then
         return 2
     fi
-    if [[ -z $3 ]]; then
+    if [[ -z "$3" ]]; then
         return 3
     fi
     local start_marker="# BEGIN $2"
     local end_marker="# END $2"
-    if ! grep -q "^$start_marker" "$1"; then
-        echo -e "\n$start_marker" >> "$1"
-        echo -e "$3" >> "$1"
-        echo -e "$end_marker" >> "$1"
+    if ! grep -q "^$start_marker" "$1" >2 /dev/null; then
+        {
+            echo -e "\n$start_marker";
+            echo -e "$3";
+            echo -e "$end_marker";
+        } >> "$1"
     fi
 }
 
@@ -184,7 +186,7 @@ setup_gdb() {
 
         # the original version of this script just appended this line, so we
         # have to grep for it manually
-        if ! grep -q "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit"; then
+        if ! grep -q "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit" ~/.gdbinit; then
             idem_file_append ~/.gdbinit "Server Workflow Tool gdbinit" "source $HOME/mongodb-mongo-master/server-workflow-tool/gdbinit"
         fi
     popd
@@ -214,7 +216,7 @@ pushd "$workdir"
 
     sudo mkdir -p /data/db
     sudo chown ubuntu /data/db
-    ssh-keyscan github.com >> ~/.ssh/known_hosts
+    ssh-keyscan github.com >> ~/.ssh/known_hosts 2> /dev/null
 
     setup_bash
     setup_master
