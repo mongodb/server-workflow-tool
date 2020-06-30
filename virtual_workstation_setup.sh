@@ -28,7 +28,7 @@ popd () {
 }
 
 silent_grep() {
-    command grep -q  > /dev/null >2&1 "$@"
+    command grep -q  > /dev/null 2>&1 "$@"
 }
 
 evg_user() {
