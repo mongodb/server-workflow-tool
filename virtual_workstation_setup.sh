@@ -1,6 +1,6 @@
 # Operations in this file should be idempotent-ish. At the very least, make
 # sure your code doesn't do duplicate work/clobber existing files on rerun
-set -o errexit
+set -euo pipefail
 workdir=$1
 
 if [[ -z $(git config --get user.name) ]]; then
