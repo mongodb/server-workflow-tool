@@ -183,6 +183,11 @@ setup_cr() {
 }
 
 setup_jira_auth() {
+    if [ -d "$HOME/mongodb-mongo-master/iteng-jira-oauth" ]; then
+        echo "'mongodb-mongo-master/iteng-jira-oauth' dir exists; skipping setup"
+        return
+    fi
+
     # Get the user's JIRA username
     read -p "JIRA username (from https://jira.mongodb.org/secure/ViewProfile.jspa): " jira_username
     echo "export JIRA_USERNAME=$jira_username" >> ~/.bash_profile
@@ -190,7 +195,7 @@ setup_jira_auth() {
     echo "Wrote username \"$JIRA_USERNAME\" to ~/.bash_profile"
 
     # Set up the Jira OAuth Token Generator repo
-    pushd $HOME/mongodb-mongo-master
+    pushd "$HOME/mongodb-mongo-master"
         git clone git@github.com:10gen/iteng-jira-oauth.git
         mkdir iteng-jira-oauth/venv
         /opt/mongodbtoolchain/v3/bin/python3 -m venv iteng-jira-oauth/venv
@@ -200,7 +205,7 @@ setup_jira_auth() {
             python -m pip install --upgrade pip
             python -m pip install -r iteng-jira-oauth/requirements.txt
             python -m pip install keyring psutil
-            dbus-run-session -- python server-workflow-tool/jira_credentials.py set-password $PWD/iteng-jira-oauth
+            dbus-run-session -- python server-workflow-tool/jira_credentials.py set-password "$PWD/iteng-jira-oauth"
         deactivate
     popd
 }
