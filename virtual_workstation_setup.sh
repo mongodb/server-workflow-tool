@@ -201,12 +201,16 @@ setup_jira_auth() {
         /opt/mongodbtoolchain/v3/bin/python3 -m venv iteng-jira-oauth/venv
 
         # Get credentials and store them in the system keyring
+        set +o nounset
         source iteng-jira-oauth/venv/bin/activate
+        set -o nounset
             python -m pip install --upgrade pip
             python -m pip install -r iteng-jira-oauth/requirements.txt
             python -m pip install keyring psutil
             dbus-run-session -- python server-workflow-tool/jira_credentials.py set-password "$PWD/iteng-jira-oauth"
+        set +o nounset
         deactivate
+        set -o nounset
     popd
 }
 

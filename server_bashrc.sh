@@ -24,5 +24,5 @@ export PATH="/opt/cmake/bin:/opt/rtags-2.38/bin:${PATH}"
 export MONGO_REPO="$HOME/mongo"
 
 # UndoDB setup
-export PATH="/opt/undodb-5/bin:${PATH}"
-export MANPATH="/opt/undodb-5/man:${MANPATH}"
+export PATH="/opt/undodb5/bin:${PATH}"
+export MANPATH="/opt/undodb5/man:${MANPATH:-}"
