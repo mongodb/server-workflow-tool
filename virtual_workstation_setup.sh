@@ -40,14 +40,15 @@ evg_user() {
     echo "$evg_username"
 }
 
-# idempotently append a given block to a file. Surround it with the markers so
+# append a given block to a file. Surround it with the markers so
 # it looks like this:
 # # BEGIN Marker
 # block goes here
 # # END Marker
 #
-# Do not attempt to change the contents of a block in the future, this function
-# doesn't support updating a block.
+# Do not attempt to change the contents of a block in the future with this
+# function. It doesn't support updating a block, so just make a block with a
+# new marker, and yell at the user at the bottom of the script to fix it
 #
 # arg1: file
 # arg2: a unique marker text for the block being appended
@@ -205,7 +206,7 @@ setup_jira_auth() {
         idem_file_append ~/.bashrc "CR Tool JIRA Username" "export JIRA_USERNAME=$jira_username"
     fi
     export JIRA_USERNAME=$jira_username
-    echo "Wrote username \"$JIRA_USERNAME\" to ~/.bash_profile"
+    echo "Wrote username \"$JIRA_USERNAME\" to ~/.bashrc"
 
     # Set up the Jira OAuth Token Generator repo
     pushd "$HOME/mongodb-mongo-master"
@@ -244,8 +245,7 @@ setup_gdb() {
 }
 
 setup_undodb() {
-    local evg_username
-    evg_username=$(evg_user)
+    local evg_username=$(evg_user)
     if [ -z "$evg_username" ]; then
         echo "UndoDB: can't figure out what your SSO username is. Set the 'UNDO_user' environment variable to your Okta username in your shell's rc file before using UndoDB"
         echo "ex: export UNDO_user='john.doe'"
@@ -255,11 +255,20 @@ setup_undodb() {
     local marker="UndoDB License Config"
     local block=$(cat <<BLOCK
 export UNDO_user='$evg_username'
-alias udb='/opt/undodb-5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
 BLOCK
     )
     idem_file_append ~/.bashrc "$marker" "$block"
     idem_file_append ~/.zshrc "$marker" "$block" 1
+
+    local marker2="UndoDB Aliases"
+    local block2=$(cat <<BLOCK
+alias udb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
+alias gdb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
+# alias gdb='/opt/mongodbtoolchain/gdb/bin/gdb'
+BLOCK
+    )
+    idem_file_append ~/.bashrc "$marker2" "$block2"
+    idem_file_append ~/.zshrc "$marker2" "$block2" 1
 }
 
 pushd "$workdir"
@@ -284,12 +293,12 @@ pushd "$workdir"
         echo "Please remove the line from your ~/.bash_profile that sources mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
         nag_user=0
     fi
-    if silent_grep "JIRA_USERNAME "~/.bash_profile; then
+    if silent_grep "JIRA_USERNAME" ~/.bash_profile; then
         echo "Please remove the line from your ~/.bash_profile that exports JIRA_USERNAME"
         nag_user=0
     fi
 
-    if nag_user; then
+    if [ $nag_user -eq 0 ]; then
         echo "^^^^^^^^^^^^^^^ READ ABOVE ^^^^^^^^^^^^^^^"
     fi
 popd
