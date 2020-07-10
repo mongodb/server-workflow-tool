@@ -249,7 +249,7 @@ setup_undodb() {
     if [ -z "$evg_username" ]; then
         echo "UndoDB: can't figure out what your SSO username is. Set the 'UNDO_user' environment variable to your Okta username in your shell's rc file before using UndoDB"
         echo "ex: export UNDO_user='john.doe'"
-        return 1
+        return
     fi
 
     local marker="UndoDB License Config"
