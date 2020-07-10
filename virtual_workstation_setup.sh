@@ -8,10 +8,14 @@ if [[ -z $(git config --get user.name) ]]; then
     exit 1
 fi
 
+silent_grep() {
+    command grep -q  > /dev/null 2>&1 "$@"
+}
+
 # SSH into GitHub and check for the success message. The SSH command
 # returns 1, so it can't be used alone
 github_test=$(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -T git@github.com 2>&1 || true)
-if ! (echo "${github_test}" | grep -q "You've successfully authenticated, but GitHub does not provide shell access"); then
+if ! (echo "${github_test}" | silent_grep "You've successfully authenticated, but GitHub does not provide shell access"); then
     echo "Cannot login to GitHub via SSH"
     echo "Please ensure your GitHub SSH keys have been set up; see the onboarding wiki page for more info"
     echo "Your SSH Public Keys:"
@@ -27,10 +31,6 @@ popd () {
     command popd "$@" > /dev/null
 }
 
-silent_grep() {
-    command grep -q  > /dev/null 2>&1 "$@"
-}
-
 evg_user() {
     local evg_username=$(grep -Po '(?<=user: ).*' "$HOME/.evergreen.yml")
     if [ -z "$evg_username" ]; then
@@ -40,6 +40,15 @@ evg_user() {
     echo "$evg_username"
 }
 
+# idempotently append a given block to a file. Surround it with the markers so
+# it looks like this:
+# # BEGIN Marker
+# block goes here
+# # END Marker
+#
+# Do not attempt to change the contents of a block in the future, this function
+# doesn't support updating a block.
+#
 # arg1: file
 # arg2: a unique marker text for the block being appended
 # arg3: block to inject
@@ -93,7 +102,9 @@ BLOCK
     idem_file_append ~/.bash_profile "Source .bashrc" "$block"
     idem_file_append ~/.bashrc "Source server_bashrc.sh" "source $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
 
+    set +o nounset
     source ~/.bash_profile
+    set -o nounset
 }
 
 setup_master() {
@@ -190,7 +201,9 @@ setup_jira_auth() {
 
     # Get the user's JIRA username
     read -p "JIRA username (from https://jira.mongodb.org/secure/ViewProfile.jspa): " jira_username
-    echo "export JIRA_USERNAME=$jira_username" >> ~/.bash_profile
+    if ! silent_grep "export JIRA_USERNAME=" ~/.bashrc; then
+        idem_file_append ~/.bashrc "CR Tool JIRA Username" "export JIRA_USERNAME=$jira_username"
+    fi
     export JIRA_USERNAME=$jira_username
     echo "Wrote username \"$JIRA_USERNAME\" to ~/.bash_profile"
 
@@ -250,7 +263,9 @@ BLOCK
 }
 
 pushd "$workdir"
+    set +o nounset
     source ~/.bashrc
+    set -o nounset
 
     sudo mkdir -p /data/db
     sudo chown ubuntu /data/db
@@ -264,8 +279,17 @@ pushd "$workdir"
     setup_gdb
     setup_undodb
 
+    nag_user=1
     if silent_grep server_bashrc ~/.bash_profile; then
         echo "Please remove the line from your ~/.bash_profile that sources mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
+        nag_user=0
+    fi
+    if silent_grep "JIRA_USERNAME "~/.bash_profile; then
+        echo "Please remove the line from your ~/.bash_profile that exports JIRA_USERNAME"
+        nag_user=0
+    fi
+
+    if nag_user; then
         echo "^^^^^^^^^^^^^^^ READ ABOVE ^^^^^^^^^^^^^^^"
     fi
 popd
