@@ -264,7 +264,7 @@ BLOCK
     local block2=$(cat <<BLOCK
 alias udb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
 alias gdb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
-# alias gdb='/opt/mongodbtoolchain/gdb/bin/gdb'
+#alias gdb='/opt/mongodbtoolchain/gdb/bin/gdb'
 BLOCK
     )
     idem_file_append ~/.bashrc "$marker2" "$block2"
@@ -278,7 +278,7 @@ pushd "$workdir"
 
     sudo mkdir -p /data/db
     sudo chown ubuntu /data/db
-    ssh-keyscan github.com >> ~/.ssh/known_hosts 2> /dev/null
+    ssh-keyscan github.com >> ~/.ssh/known_hosts 2>&1
 
     setup_bash
     setup_master
