@@ -263,8 +263,8 @@ BLOCK
     local marker2="UndoDB Aliases"
     local block2=$(cat <<BLOCK
 alias udb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
-alias gdb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
-#alias gdb='/opt/mongodbtoolchain/gdb/bin/gdb'
+#alias gdb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
+alias gdb='/opt/mongodbtoolchain/gdb/bin/gdb'
 BLOCK
     )
     idem_file_append ~/.bashrc "$marker2" "$block2"
