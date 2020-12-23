@@ -1,6 +1,6 @@
 # MongoDB Server Team Workflow Tool
 
-Command line tool to help MongoDB server engineers set up dev environments (not for daily workflow).
+Command line tool to help MongoDB server engineers set up dev environments.
 
 ## Installation
 ```
@@ -13,7 +13,8 @@ brew install python3 python2
 brew upgrade
 
 # Install and update pip.
-python3 -m pip install --upgrade pip setuptools
+# See SERVER-53250 for more info about the pip version requirement.
+python3 -m pip install --upgrade "pip<20.3" setuptools
 
 # Install the server workflow tool.
 python3 -m pip install git+https://github.com/mongodb/server-workflow-tool.git
