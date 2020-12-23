@@ -127,8 +127,9 @@ setup_master() {
         source python3-venv/bin/activate
         set -o nounset
 
-            # The bundled pip version is very old (10.0.1), upgrade to (20.0+).
-            python -m pip install --upgrade pip
+            # The bundled pip version is very old (10.0.1), upgrade to the newest version that still
+            # uses the original resolver. See SERVER-53250 for more info.
+            python -m pip install --upgrade "pip<20.3"
 
             python -m pip install -r etc/pip/dev-requirements.txt
             python -m pip install keyring
@@ -167,8 +168,9 @@ setup_44() {
         source python3-venv/bin/activate
         set -o nounset
 
-            # The bundled pip version is very old (10.0.1), upgrade to (20.0+).
-            python -m pip install --upgrade pip
+            # The bundled pip version is very old (10.0.1), upgrade to the newest version that still
+            # uses the original resolver. See SERVER-53250 for more info.
+            python -m pip install --upgrade "pip<20.3"
 
             python -m pip install -r etc/pip/dev-requirements.txt
             python -m pip install keyring
