@@ -213,6 +213,11 @@ setup_jira_auth() {
     # Set up the Jira OAuth Token Generator repo
     pushd "$HOME/mongodb-mongo-master"
         git clone git@github.com:10gen/iteng-jira-oauth.git
+        pushd iteng-jira-oauth
+            # Newer versions parse commandline options, which is incompatible with how jira_credentials.py
+            # uses this repo.
+            git checkout c837b044ca562c45fbd119a07cf477650545731e
+        popd
         mkdir iteng-jira-oauth/venv
         /opt/mongodbtoolchain/v3/bin/python3 -m venv iteng-jira-oauth/venv
 
