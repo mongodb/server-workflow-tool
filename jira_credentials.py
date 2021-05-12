@@ -33,7 +33,7 @@ def create_cr(args, extra_args):
 
     sys.path.append(os.path.expanduser(os.path.join("~", "kernel-tools", "codereview")))
     upload = importlib.import_module('upload')
-    upload_args = ["--check-clang-format", "--check-eslint"]
+    upload_args = ["--check-clang-format", "--check-eslint", "--check-todos"]
     if os.getenv('JIRA_USERNAME') is not None:
         upload_args.append("--jira_user={}".format(os.getenv('JIRA_USERNAME')))
     upload.RealMain(upload_args + extra_args)
