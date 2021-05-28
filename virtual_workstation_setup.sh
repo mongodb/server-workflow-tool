@@ -146,6 +146,46 @@ setup_master() {
     echo "Finished setting up the mongo repo..."
 }
 
+setup_50() {
+    if [[ -d mongo-v50 ]]; then
+        echo "'mongo-v50' dir exists; skipping setup"
+        return
+    fi
+
+    echo "Setting up the 5.0 branch..."
+    pushd "$workdir/mongo"
+        git worktree add "$workdir/mongo-v50" v5.0
+    popd
+
+    pushd "$workdir/mongo-v50"
+        mkdir -p src/mongo/db/modules
+        git clone git@github.com:10gen/mongo-enterprise-modules.git -b v5.0 src/mongo/db/modules/enterprise
+
+        /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
+
+        # virtualenv doesn't like nounset
+        set +o nounset
+        source python3-venv/bin/activate
+        set -o nounset
+
+            # The bundled pip version is very old (10.0.1), upgrade to the newest version that still
+            # uses the original resolver. See SERVER-53250 for more info.
+            python -m pip install --upgrade "pip<20.3"
+
+            python -m pip install -r etc/pip/dev-requirements.txt
+            python -m pip install keyring
+
+            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_stable_clang.vars compiledb
+
+            buildninjaic
+
+        set +o nounset
+        deactivate
+        set -o nounset
+    popd
+    echo "Finished setting up the 5.0 branch"
+}
+
 setup_44() {
     if [[ -d mongo-v44 ]]; then
         echo "'mongo-v44' dir exists; skipping setup"
@@ -289,7 +329,7 @@ pushd "$workdir"
 
     setup_bash
     setup_master
-    setup_44
+    setup_50
     setup_cr
     setup_jira_auth
     setup_gdb
