@@ -12,6 +12,29 @@ silent_grep() {
     command grep -q  > /dev/null 2>&1 "$@"
 }
 
+set +e
+# we assume that if the user has non default SSH key filename they know about ssh-agent
+# and can set it up themselves
+for filename in ~/.ssh/id_*; do
+    [[ "$filename" == *".pub" ]] && continue
+    # check if SSH key has passphrase
+    ssh-keygen -y -P "" -f "$filename" > /dev/null 2>&1
+    [ $? -eq 0 ] && continue
+    # check if SSH agent is running and have any SSH keys added
+    # (we assume that the key with passphrase will be added, but not checking it explicitly)
+    ssh-add -l > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "SSH key with passphare found: $filename"
+        echo "Please do the following steps:"
+        echo " - Setup ssh-agent"
+        echo " - Add SSH key with passphrase to the ssh-agent"
+        echo " - Rerun the Evergreen project setup command"
+        echo "It will help to avoid entering passphrase during the setup script run"
+        exit 1
+    fi
+done
+set -e
+
 # SSH into GitHub and check for the success message. The SSH command
 # returns 1, so it can't be used alone
 github_test=$(ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -T git@github.com 2>&1 || true)
