@@ -16,7 +16,7 @@ set +e
 # we assume that if the user has non default SSH key filename they know about ssh-agent
 # and can set it up themselves
 for filename in ~/.ssh/id_*; do
-    [[ "$filename" == *".pub" ]] && continue
+    [[ -e "$filename" && "$filename" != *".pub" ]] || continue
     # check if SSH key has passphrase
     ssh-keygen -y -P "" -f "$filename" > /dev/null 2>&1
     [ $? -eq 0 ] && continue
