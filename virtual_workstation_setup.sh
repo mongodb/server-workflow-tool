@@ -101,6 +101,8 @@ idem_file_append() {
     fi
 }
 
+git clone git@github.com:mongodb/server-workflow-tool.git
+
 # Here's a quick explanation of what's going on here for the next soul here:
 # If you like visuals instead: https://shreevatsa.files.wordpress.com/2008/03/bashstartupfiles1.png
 # bash_profile is generally invoked once per login shell.
@@ -124,7 +126,7 @@ BLOCK
     )
 
     idem_file_append ~/.bash_profile "Source .bashrc" "$block"
-    idem_file_append ~/.bashrc "Source server_bashrc.sh" "source $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
+    idem_file_append ~/.bashrc "Source server_bashrc.sh" "source $HOME/server-workflow-tool/server_bashrc.sh"
 
     set +o nounset
     source ~/.bash_profile
@@ -138,6 +140,15 @@ setup_master() {
     fi
 
     echo "Setting up the mongo repo..."
+    if [[ -d /home/ubuntu ]]; then
+      read -p "/home/ubuntu dir exists; sure you want to delete all non-hidden folders expect for 'cli_bin' and 'evergreen' [y/n]?" x
+      if [ $x == y ]; then
+          echo "Deleting files in /home/ubuntu"
+          find /home/ubuntu -mindepth 1 -type d -path '*/.*' -path '*/server-workflow-tool*' -prune -o -type f ! -name 'cli_bin' ! -name 'evergreen' ! -name '.*' | xargs rm -rv
+      else
+        echo "Please remove all non-hidden folders in your home directory except for 'cli_bin' and the 'evergreen' binary."
+      fi
+    fi
     git clone git@github.com:mongodb/mongo.git
     pushd "$workdir/mongo"
         mkdir -p src/mongo/db/modules
