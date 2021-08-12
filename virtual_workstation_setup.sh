@@ -101,7 +101,30 @@ idem_file_append() {
     fi
 }
 
-git clone git@github.com:mongodb/server-workflow-tool.git
+cleanup_folders() {
+    if [[ -d server-workflow-tool ]]; then
+      rm -rf server-workflow-tool
+    fi
+    git clone git@github.com:mongodb/server-workflow-tool.git
+
+    if [ -d mongo ] || [ -d mong-v50 ] || [-d mongo-v44]; then
+      read -p "other dirs exist; sure you want to delete all non-hidden folders except for 'cli_bin' and 'evergreen' [y/n]?" x
+      if [ $x == y ]; then
+          echo "Deleting files in ~"
+          # find ~ -mindepth 1 -type d -path '*/.*' -prune -path '*/server-workflow-tool*' -prune -o -type f ! -name 'cli_bin' ! -name 'evergreen' ! -name '.*' | xargs rm -rv
+          for item in ~; do
+            [ "$item" = "*/server-workflow-tool" ] || [ "$item" = 'evergreen' ] || [ "$item" = 'cli_bin' ] && contine
+            # Hidden files are ignored by default.
+            [[ "$item" = "\.*" ]] && continue
+            rm -rfv "$item"
+          done
+      else
+        echo "Please remove all non-hidden folders in your home directory except for 'cli_bin' and the 'evergreen' binary."
+      fi
+    fi
+}
+
+
 
 # Here's a quick explanation of what's going on here for the next soul here:
 # If you like visuals instead: https://shreevatsa.files.wordpress.com/2008/03/bashstartupfiles1.png
@@ -140,15 +163,6 @@ setup_master() {
     fi
 
     echo "Setting up the mongo repo..."
-    if [[ -d /home/ubuntu ]]; then
-      read -p "/home/ubuntu dir exists; sure you want to delete all non-hidden folders expect for 'cli_bin' and 'evergreen' [y/n]?" x
-      if [ $x == y ]; then
-          echo "Deleting files in /home/ubuntu"
-          find /home/ubuntu -mindepth 1 -type d -path '*/.*' -path '*/server-workflow-tool*' -prune -o -type f ! -name 'cli_bin' ! -name 'evergreen' ! -name '.*' | xargs rm -rv
-      else
-        echo "Please remove all non-hidden folders in your home directory except for 'cli_bin' and the 'evergreen' binary."
-      fi
-    fi
     git clone git@github.com:mongodb/mongo.git
     pushd "$workdir/mongo"
         mkdir -p src/mongo/db/modules
@@ -359,6 +373,7 @@ pushd "$workdir"
     sudo chown ubuntu /data/db
     ssh-keyscan github.com >> ~/.ssh/known_hosts 2>&1
 
+    cleanup_folders
     setup_bash
     setup_master
     setup_50
