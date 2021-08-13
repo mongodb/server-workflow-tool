@@ -111,13 +111,7 @@ cleanup_folders() {
       read -p "other dirs exist; sure you want to delete all non-hidden folders except for 'cli_bin' and 'evergreen' [y/n]?" x
       if [ $x == y ]; then
           echo "Deleting files in ~"
-          # find ~ -mindepth 1 -type d -path '*/.*' -prune -path '*/server-workflow-tool*' -prune -o -type f ! -name 'cli_bin' ! -name 'evergreen' ! -name '.*' | xargs rm -rv
-          for item in ~; do
-            [ "$item" = "*/server-workflow-tool" ] || [ "$item" = 'evergreen' ] || [ "$item" = 'cli_bin' ] && contine
-            # Hidden files are ignored by default.
-            [[ "$item" = "\.*" ]] && continue
-            rm -rfv "$item"
-          done
+          find ~ -mindepth 1 -type d ! -path '*/.*' ! -path '*/server-workflow-tool*' -prune -o -type f ! -name 'cli_bin' ! -name 'evergreen' ! -name '.*' -prune | xargs rm -rv
       else
         echo "Please remove all non-hidden folders in your home directory except for 'cli_bin' and the 'evergreen' binary."
       fi
