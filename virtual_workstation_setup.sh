@@ -102,16 +102,18 @@ idem_file_append() {
 }
 
 cleanup_folders() {
-    if [[ -d server-workflow-tool ]]; then
-      rm -rf server-workflow-tool
+    if [[ -d mongodb-mongo-master/server-workflow-tool ]]; then
+      rm -rf mongodb-mongo-master/server-workflow-tool
     fi
+    cd mongodb-mongo-master
     git clone git@github.com:mongodb/server-workflow-tool.git
 
     if [ -d mongo ] || [ -d mong-v50 ] || [-d mongo-v44]; then
       read -p "other dirs exist; sure you want to delete all non-hidden folders except for 'cli_bin' and 'evergreen' [y/n]?" x
       if [ $x == y ]; then
           echo "Deleting files in ~"
-          find ~ -mindepth 1 -type d ! -path '*/.*' ! -path '*/server-workflow-tool*' -prune -o -type f ! -name 'cli_bin' ! -name 'evergreen' ! -name '.*' -prune | xargs rm -rv
+          # find ~ -mindepth 1 -type d ! -path '*/.*' ! -path '*/server-workflow-tool*' -prune -o -type f ! -name 'cli_bin' ! -name 'evergreen' ! -name '.*' -prune | xargs rm -rv
+          find testdir/ -mindepth 1 -type d \( -regex '.*/\..*' -o -name mongodb-mongo-master -o -name cli_bin \) -prune -o -type f \( -name 'evergreen' -o -name '.*' \) -o -print | xargs rm -rv
       else
         echo "Please remove all non-hidden folders in your home directory except for 'cli_bin' and the 'evergreen' binary."
       fi
