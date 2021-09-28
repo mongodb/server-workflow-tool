@@ -138,7 +138,7 @@ setup_master() {
     fi
 
     echo "Setting up the mongo repo..."
-    git clone git@github.com:mongodb/mongo.git
+    git clone git@github.com:10gen/mongo.git
     pushd "$workdir/mongo"
         mkdir -p src/mongo/db/modules
         git clone git@github.com:10gen/mongo-enterprise-modules.git src/mongo/db/modules/enterprise
