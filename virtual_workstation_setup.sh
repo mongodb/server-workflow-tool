@@ -116,6 +116,8 @@ idem_file_append() {
 # session.
 setup_bash() {
     # Bash profile should source .bashrc
+    echo "################################################################################"
+    echo "Setting up bash..."
     local block=$(cat <<BLOCK
 if [[ -f ~/.bashrc ]]; then
     source ~/.bashrc
@@ -132,12 +134,13 @@ BLOCK
 }
 
 setup_master() {
+    echo "################################################################################"
+    echo "Setting up the mongo repo..."
     if [[ -d mongo ]]; then
         echo "'mongo' dir exists; skipping setup"
         return
     fi
 
-    echo "Setting up the mongo repo..."
     git clone git@github.com:10gen/mongo.git
     pushd "$workdir/mongo"
         mkdir -p src/mongo/db/modules
@@ -168,12 +171,13 @@ setup_master() {
 }
 
 setup_50() {
+    echo "################################################################################"
+    echo "Setting up the 5.0 branch..."
     if [[ -d mongo-v50 ]]; then
         echo "'mongo-v50' dir exists; skipping setup"
         return
     fi
 
-    echo "Setting up the 5.0 branch..."
     pushd "$workdir/mongo"
         git worktree add "$workdir/mongo-v50" v5.0
     popd
@@ -208,12 +212,13 @@ setup_50() {
 }
 
 setup_44() {
+    echo "################################################################################"
+    echo "Setting up the 4.4 branch..."
     if [[ -d mongo-v44 ]]; then
         echo "'mongo-v44' dir exists; skipping setup"
         return
     fi
 
-    echo "Setting up the 4.4 branch..."
     pushd "$workdir/mongo"
         git worktree add "$workdir/mongo-v44" v4.4
     popd
@@ -248,6 +253,8 @@ setup_44() {
 }
 
 setup_cr() {
+    echo "################################################################################"
+    echo "Setting up Rietveld Code Review tool..."
     pushd "$workdir"
         if [[ -d 'kernel-tools' ]]; then
             echo "'kernel-tools' dir exists; skipping setup"
@@ -258,6 +265,8 @@ setup_cr() {
 }
 
 setup_jira_auth() {
+    echo "################################################################################"
+    echo "Setting up Jira Authentication..."
     if [ -d "$HOME/mongodb-mongo-master/iteng-jira-oauth" ]; then
         echo "'mongodb-mongo-master/iteng-jira-oauth' dir exists; skipping setup"
         return
@@ -297,6 +306,8 @@ setup_jira_auth() {
 }
 
 setup_gdb() {
+    echo "################################################################################"
+    echo "Setting up GDB..."
     pushd "$workdir"
         if [[ -d 'Boost-Pretty-Printer' ]]; then
             echo "'Boost-Pretty-Printer' dir exists; skipping setup"
@@ -313,6 +324,8 @@ setup_gdb() {
 }
 
 setup_undodb() {
+    echo "################################################################################"
+    echo "Setting up UndoDB..."
     local evg_username=$(evg_user)
     if [ -z "$evg_username" ]; then
         echo "UndoDB: can't figure out what your SSO username is. Set the 'UNDO_user' environment variable to your Okta username in your shell's rc file before using UndoDB"
@@ -339,6 +352,54 @@ BLOCK
     idem_file_append ~/.zshrc "$marker2" "$block2" 1
 }
 
+setup_pipx() {
+    echo "################################################################################"
+    echo "Installing 'pipx' command..."
+    if command -v pipx &> /dev/null; then
+        echo "'pipx' command exists; skipping setup"
+    else
+        export PATH="$PATH:$HOME/.local/bin"
+        local venv_name="tmp-pipx-venv"
+        /opt/mongodbtoolchain/v3/bin/python3 -m venv $venv_name
+
+        # virtualenv doesn't like nounset
+        set +o nounset
+        source $venv_name/bin/activate
+        set -o nounset
+
+            python -m pip install --upgrade "pip<20.3"
+            python -m pip install pipx
+
+            pipx install pipx --python /opt/mongodbtoolchain/v3/bin/python3 --force
+
+        set +o nounset
+        deactivate
+        set -o nounset
+
+        rm -rf $venv_name
+
+        local marker="pipx config"
+        local block=$(cat <<BLOCK
+# pipx will install binaries to "~/.local/bin"
+export PATH="$PATH:$HOME/.local/bin"
+BLOCK
+        )
+        idem_file_append ~/.bashrc "$marker" "$block"
+        idem_file_append ~/.zshrc "$marker" "$block" 1
+    fi
+}
+
+setup_evg_module_manager() {
+    echo "################################################################################"
+    echo "Installing 'evg-module-manager' command..."
+    export PATH="$PATH:$HOME/.local/bin"
+    if command -v evg-module-manager &> /dev/null; then
+        echo "'evg-module-manager' command exists; skipping setup"
+    else
+        pipx install evg-module-manager
+    fi
+}
+
 pushd "$workdir"
     set +o nounset
     source ~/.bashrc
@@ -355,6 +416,8 @@ pushd "$workdir"
     setup_jira_auth
     setup_gdb
     setup_undodb
+    setup_pipx
+    setup_evg_module_manager  # This step requires `setup_pipx` to have been run.
 
     nag_user=1
     if silent_grep server_bashrc ~/.bash_profile; then
