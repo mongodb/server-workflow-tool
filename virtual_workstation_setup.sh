@@ -417,7 +417,7 @@ pushd "$workdir"
     setup_gdb
     setup_undodb
     setup_pipx
-    setup_evg_module_manager
+    setup_evg_module_manager  # This step requires `setup_pipx` to have been run.
 
     nag_user=1
     if silent_grep server_bashrc ~/.bash_profile; then
