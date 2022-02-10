@@ -323,35 +323,6 @@ setup_gdb() {
     popd
 }
 
-setup_undodb() {
-    echo "################################################################################"
-    echo "Setting up UndoDB..."
-    local evg_username=$(evg_user)
-    if [ -z "$evg_username" ]; then
-        echo "UndoDB: can't figure out what your SSO username is. Set the 'UNDO_user' environment variable to your Okta username in your shell's rc file before using UndoDB"
-        echo "ex: export UNDO_user='john.doe'"
-        return
-    fi
-
-    local marker="UndoDB License Config"
-    local block=$(cat <<BLOCK
-export UNDO_user='$evg_username'
-BLOCK
-    )
-    idem_file_append ~/.bashrc "$marker" "$block"
-    idem_file_append ~/.zshrc "$marker" "$block" 1
-
-    local marker2="UndoDB Aliases"
-    local block2=$(cat <<BLOCK
-alias udb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
-#alias gdb='/opt/undodb5/bin/udb --undodb-gdb-exe /opt/mongodbtoolchain/gdb/bin/gdb'
-alias gdb='/opt/mongodbtoolchain/gdb/bin/gdb'
-BLOCK
-    )
-    idem_file_append ~/.bashrc "$marker2" "$block2"
-    idem_file_append ~/.zshrc "$marker2" "$block2" 1
-}
-
 setup_pipx() {
     echo "################################################################################"
     echo "Installing 'pipx' command..."
@@ -400,6 +371,17 @@ setup_evg_module_manager() {
     fi
 }
 
+setup_db_contrib_tool() {
+    echo "################################################################################"
+    echo "Installing 'db-contrib-tool' command..."
+    export PATH="$PATH:$HOME/.local/bin"
+    if command -v db-contrib-tool &> /dev/null; then
+        echo "'db-contrib-tool' command exists; skipping setup"
+    else
+        pipx install db-contrib-tool
+    fi
+}
+
 pushd "$workdir"
     set +o nounset
     source ~/.bashrc
@@ -415,9 +397,10 @@ pushd "$workdir"
     setup_cr
     setup_jira_auth
     setup_gdb
-    setup_undodb
+
     setup_pipx
     setup_evg_module_manager  # This step requires `setup_pipx` to have been run.
+    setup_db_contrib_tool  # This step requires `setup_pipx` to have been run.
 
     nag_user=1
     if silent_grep server_bashrc ~/.bash_profile; then
