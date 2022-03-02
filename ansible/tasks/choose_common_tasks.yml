@@ -1,0 +1,18 @@
+- name: list all custom roles
+  shell: ls "{{ roles_dir }}/common/"
+  register: commons
+
+- pause:
+    prompt: "Common roles \n - {{ commons.stdout 
+                | split('\n') 
+                | difference(core_common_roles) 
+                | join('\n - ') }}\n
+            {{ choose_multiple_from_list_hint }}"
+    echo: yes
+  register: chosen_commons
+
+- name: Validation
+  include_tasks: "{{ tasks_dir }}/validate_custom_role_names.yml"
+
+- name: Run chosen custom roles
+  include_tasks: "{{ tasks_dir }}/run_custom_roles.yml"

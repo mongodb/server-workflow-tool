@@ -1,0 +1,26 @@
+- name: Start Pipeline
+  # since ansible is running on localhost always, we are leaving it like this. we may need to change it in the future.
+  hosts: localhost  
+  vars_files:
+    - vars/main.yml
+
+  vars_prompt:
+  - name: team_or_custom
+    prompt: "Do you want team({{ team_option }}) or custom({{ custom_option }}) configuration? Reply with 
+             number ({{ team_or_custom_values | join(' or ') }})"
+    private: false
+
+  tasks:
+  - name: Set up core components
+    include_role:
+      name: "{{ roles_dir }}/common/{{ item }}"
+      tasks_from: main
+    loop: "{{ core_common_roles }}"
+
+  - name: Set up team role
+    when: team_or_custom == team_option
+    include_tasks: "{{ tasks_dir }}/choose_team.yml"
+
+  - name: Set up custom roles
+    when: team_or_custom == custom_option
+    include_tasks: "{{ tasks_dir }}/choose_common_tasks.yml"

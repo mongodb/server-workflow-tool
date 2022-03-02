@@ -1,0 +1,5 @@
+- name: Set up core components
+    include_role:
+      name: "{{ roles_dir }}/common/{{ item }}"
+      tasks_from: main
+    loop: "{{ core_common_roles }}"

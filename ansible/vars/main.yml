@@ -1,0 +1,22 @@
+# PATH values
+roles_dir: "roles"  # full path of roles folder relative to start.yml
+tasks_dir: "tasks"  # full path of tasks folder relative to start.yml
+
+# Initial input values
+team_option: "1"
+custom_option: "2"
+team_or_custom_values:
+  - "{{ team_option }}"
+  - "{{ custom_option }}"
+
+# These roles are always executed.
+# They are located inside "common" folder.
+core_common_roles:
+  - git
+  - zsh
+
+# Common strings for different tasks
+choose_multiple_from_list: "To select multiple of them, use space-separated list of values. 
+                            For instance: item1 item2 item3"
+choose_from_list_hint: "Choose from given list. Type full name of item"
+choose_multiple_from_list_hint: "{{ choose_from_list_hint }}. {{ choose_multiple_from_list }}"

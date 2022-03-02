@@ -1,0 +1,5 @@
+- name: Install git
+  # just a test/sample to demonstrate how it works. it prints text t certain file
+  copy:
+    content: "Hello GIT"
+    dest: git.txt

@@ -1,0 +1,7 @@
+- name: Validate initial input to decide between team role or custom roles
+    assert:
+      that:
+        - team_or_custom in team_or_custom_values
+      fail_msg:
+        - "Invalid option chosen - {{ team_or_custom }}. 
+           Available options are: {{ team_or_custom_values | join(', ') }}"

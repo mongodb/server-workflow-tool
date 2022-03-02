@@ -1,0 +1,17 @@
+- name: list all team roles
+  shell: ls "{{ roles_dir }}/teams/"
+  register: teams
+
+- pause:
+    prompt: "Teams \n - {{ teams.stdout 
+              | split('\n') 
+              | join('\n - ') }}\n
+            {{ choose_from_list_hint }}"
+    echo: yes
+  register: my_team
+
+- name: Validation
+  include_tasks: "{{ tasks_dir }}/validate_team_role_name.yml"
+
+- name: Run chosen team role
+  include_tasks: "{{ tasks_dir }}/run_team_role.yml"
