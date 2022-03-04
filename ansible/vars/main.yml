@@ -12,11 +12,11 @@ team_or_custom_values:
 # These roles are always executed.
 # They are located inside "common" folder.
 core_common_roles:
-  - git
-  - zsh
+  - install-requirements
+  - setup-oh-my-zsh
 
 # Common strings for different bootstrap-tasks
 choose_multiple_from_list: "To select multiple of them, use space-separated list of values. 
                             For instance: item1 item2 item3"
-choose_from_list_hint: "Choose from given list. Type full name of item"
+choose_from_list_hint: "Choose from given list. Type full name of item. Press <Enter> to skip selection"
 choose_multiple_from_list_hint: "{{ choose_from_list_hint }}. {{ choose_multiple_from_list }}"

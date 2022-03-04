@@ -8,9 +8,21 @@
   - name: team_or_custom
     prompt: "Do you want team({{ team_option }}) or custom({{ custom_option }}) configuration? Reply with 
              number ({{ team_or_custom_values | join(' or ') }})"
-    private: false
+    private: no
 
   tasks:
+  - name: Store username
+    command: whoami
+    register: username
+
+  - name: Store username and users list globally
+    set_fact:
+      username: "{{ username.stdout }}"
+      users:
+       - username: "{{ username.stdout }}"
+    delegate_to: localhost
+    delegate_facts: yes
+
   - name: Set up core components
     include_role:
       name: "{{ roles_dir }}/common/{{ item }}"

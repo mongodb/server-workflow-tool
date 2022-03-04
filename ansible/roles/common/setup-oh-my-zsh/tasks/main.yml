@@ -1,0 +1,4 @@
+- name: Set up third party 'oh-my-zsh'
+  include_role:
+    name: "{{ roles_dir }}/third-party/oh-my-zsh"
+    tasks_from: main
