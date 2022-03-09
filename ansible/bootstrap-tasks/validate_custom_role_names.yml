@@ -1,0 +1,11 @@
+- name: Validate chosen custom roles
+  assert:
+    that:
+      - "'{{ item }}' == '' or '{{ item }}' in {{ commons.stdout | split('\n') }}"
+    fail_msg:
+      - "Invalid role chosen - {{ item }}. Available options - {{ commons.stdout 
+          | split('\n') 
+          | difference(core_common_roles) 
+          | join(', ') }}"
+
+  loop: "{{ chosen_commons.user_input | split(' ') }}"

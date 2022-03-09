@@ -1,0 +1,4 @@
+- name: Run team role
+  include_role:
+    name: "{{ roles_dir }}/teams/{{ my_team.user_input }}"
+    tasks_from: main

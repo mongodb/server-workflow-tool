@@ -1,0 +1,7 @@
+- name: Validate input for team role
+  assert:
+    that:
+      - my_team.user_input == '' or my_team.user_input in "{{ teams.stdout | split('\n') }}"
+    fail_msg:
+      - "Invalid team chosen: {{ my_team.user_input }}. 
+         Available options - {{ teams.stdout | split('\n') | join(', ') }}"

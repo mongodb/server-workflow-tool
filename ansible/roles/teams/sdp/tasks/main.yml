@@ -1,0 +1,5 @@
+- name: SDP
+  # just a test/sample to demonstrate how it works. it prints text to a certain file
+  copy:
+    content: "Hello SDP"
+    dest: sdp.txt

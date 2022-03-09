@@ -1,0 +1,2 @@
+- name: Install third-party requirements/roles
+  command: "ansible-galaxy install -r requirements.yml --roles-path {{ roles_dir }}/third-party"

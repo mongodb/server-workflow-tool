@@ -1,0 +1,5 @@
+- name: Run all chosen custom roles
+  include_role:
+    name: "{{ roles_dir }}/common/{{ item }}"
+    tasks_from: main
+  loop: "{{ chosen_commons.user_input | split(' ') }}"
