@@ -6,8 +6,8 @@ This tiny project tries to automate that process and take away all setup hurdle 
 
 ## When you add your team to `roles/teams` or edit existing team role
 Please, update `roles/common` folder: add any new common task that can be shared among other teams or can be used 
-by other users (as a role). This folder keeps all roles of all teams. When users can't find their team,
-they'll use these common roles instead.
+by other users (as a role). This folder keeps all roles of all teams. 
+If a user can't find their team, please create a new one on top of the common roles shared by all teams.
 
 ## Rules to make everything better
 - Use lowercase when naming your team role, `"_"` instead of space. `"My awesome team"` might be good in general, 
