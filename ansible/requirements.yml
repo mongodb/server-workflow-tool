@@ -1,3 +1,7 @@
 # Oh, My Zsh role. Includes zsh and git as plugin (and installs them by default).
-- src: gantsign.oh-my-zsh
-  name: oh-my-zsh
+- src: gantsign.oh-my-zsh  # original name of role in Ansible Galaxy
+  name: oh-my-zsh          # role will be installed with this name locally
+
+# Your new requirement template:
+#- src: <name-of-role>
+#  name: <local-name-of-role>
