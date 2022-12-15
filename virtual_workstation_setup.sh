@@ -101,6 +101,26 @@ idem_file_append() {
     fi
 }
 
+cleanup_folders() {
+    if [[ -d mongodb-mongo-master/server-workflow-tool ]]; then
+      rm -rf mongodb-mongo-master/server-workflow-tool
+    fi
+    cd mongodb-mongo-master
+    git clone git@github.com:mongodb/server-workflow-tool.git
+
+    if [ -d mongo ] || [ -d mong-v50 ] || [-d mongo-v44]; then
+      read -p "other dirs exist; sure you want to delete all non-hidden folders except for 'cli_bin' and 'evergreen' [y/n]?" x
+      if [ $x == y ]; then
+          echo "Deleting files in ~"
+          find ~ -mindepth 1 -type d \( -regex '.*/\..*' -o -name mongodb-mongo-master -o -name cli_bin \) -prune -o -type f \( -name 'evergreen' -o -name '.*' \) -o -print | xargs rm -rv
+      else
+        echo "Please remove all non-hidden folders in your home directory except for 'cli_bin' and the 'evergreen' binary."
+      fi
+    fi
+}
+
+
+
 # Here's a quick explanation of what's going on here for the next soul here:
 # If you like visuals instead: https://shreevatsa.files.wordpress.com/2008/03/bashstartupfiles1.png
 # bash_profile is generally invoked once per login shell.
@@ -126,7 +146,7 @@ BLOCK
     )
 
     idem_file_append ~/.bash_profile "Source .bashrc" "$block"
-    idem_file_append ~/.bashrc "Source server_bashrc.sh" "source $HOME/mongodb-mongo-master/server-workflow-tool/server_bashrc.sh"
+    idem_file_append ~/.bashrc "Source server_bashrc.sh" "source $HOME/server-workflow-tool/server_bashrc.sh"
 
     set +o nounset
     source ~/.bash_profile
@@ -391,6 +411,7 @@ pushd "$workdir"
     sudo chown ubuntu /data/db
     ssh-keyscan github.com >> ~/.ssh/known_hosts 2>&1
 
+    cleanup_folders
     setup_bash
     setup_master
     setup_50
