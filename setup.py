@@ -41,7 +41,7 @@ setuptools.setup(
     install_requires=[
         'keyring == 19.0.1',
         'invoke == 1.2.0',
-        'pyyaml == 5.1',
+        'pyyaml == 5.4',
         'requests == 2.21.0'
     ],
     entry_points={
