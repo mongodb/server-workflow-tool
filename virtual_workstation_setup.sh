@@ -146,11 +146,11 @@ setup_master() {
         mkdir -p src/mongo/db/modules
         git clone git@github.com:10gen/mongo-enterprise-modules.git src/mongo/db/modules/enterprise
 
-        /opt/mongodbtoolchain/v4/bin/python3 -m venv py3.10.4-venv
+        /opt/mongodbtoolchain/v4/bin/python3 -m venv python3-venv
 
         # virtualenv doesn't like nounset
         set +o nounset
-        source py3.10.4-venv/bin/activate
+        source python3-venv/bin/activate
         set -o nounset
 
             python -m pip install "pip==21.0.1"
