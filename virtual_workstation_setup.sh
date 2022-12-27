@@ -146,7 +146,7 @@ setup_master() {
         mkdir -p src/mongo/db/modules
         git clone git@github.com:10gen/mongo-enterprise-modules.git src/mongo/db/modules/enterprise
 
-        /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
+        /opt/mongodbtoolchain/v4/bin/python3 -m venv python3-venv
 
         # virtualenv doesn't like nounset
         set +o nounset
@@ -158,7 +158,7 @@ setup_master() {
             python -m pip install -r etc/pip/dev-requirements.txt
             python -m pip install keyring
 
-            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
+            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_stable_clang.vars compiledb
 
             buildninjaic
 
@@ -170,21 +170,21 @@ setup_master() {
     echo "Finished setting up the mongo repo..."
 }
 
-setup_50() {
+setup_60() {
     echo "################################################################################"
-    echo "Setting up the 5.0 branch..."
-    if [[ -d mongo-v50 ]]; then
-        echo "'mongo-v50' dir exists; skipping setup"
+    echo "Setting up the 6.0 branch..."
+    if [[ -d mongo-v60 ]]; then
+        echo "'mongo-v60' dir exists; skipping setup"
         return
     fi
 
     pushd "$workdir/mongo"
-        git worktree add "$workdir/mongo-v50" v5.0
+        git worktree add "$workdir/mongo-v60" v6.0
     popd
 
-    pushd "$workdir/mongo-v50"
+    pushd "$workdir/mongo-v60"
         mkdir -p src/mongo/db/modules
-        git clone git@github.com:10gen/mongo-enterprise-modules.git -b v5.0 src/mongo/db/modules/enterprise
+        git clone git@github.com:10gen/mongo-enterprise-modules.git -b v6.0 src/mongo/db/modules/enterprise
 
         /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
 
@@ -192,10 +192,7 @@ setup_50() {
         set +o nounset
         source python3-venv/bin/activate
         set -o nounset
-
-            # The bundled pip version is very old (10.0.1), upgrade to the newest version that still
-            # uses the original resolver. See SERVER-53250 for more info.
-            python -m pip install --upgrade "pip<20.3"
+            python -m pip install --upgrade "pip==21.0.1"
 
             python -m pip install -r etc/pip/dev-requirements.txt
             python -m pip install keyring
@@ -208,48 +205,7 @@ setup_50() {
         deactivate
         set -o nounset
     popd
-    echo "Finished setting up the 5.0 branch"
-}
-
-setup_44() {
-    echo "################################################################################"
-    echo "Setting up the 4.4 branch..."
-    if [[ -d mongo-v44 ]]; then
-        echo "'mongo-v44' dir exists; skipping setup"
-        return
-    fi
-
-    pushd "$workdir/mongo"
-        git worktree add "$workdir/mongo-v44" v4.4
-    popd
-
-    pushd "$workdir/mongo-v44"
-        mkdir -p src/mongo/db/modules
-        git clone git@github.com:10gen/mongo-enterprise-modules.git -b v4.4 src/mongo/db/modules/enterprise
-
-        /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
-
-        # virtualenv doesn't like nounset
-        set +o nounset
-        source python3-venv/bin/activate
-        set -o nounset
-
-            # The bundled pip version is very old (10.0.1), upgrade to the newest version that still
-            # uses the original resolver. See SERVER-53250 for more info.
-            python -m pip install --upgrade "pip<20.3"
-
-            python -m pip install -r etc/pip/dev-requirements.txt
-            python -m pip install keyring
-
-            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_v3_clang.vars compiledb
-
-            buildninjaic
-
-        set +o nounset
-        deactivate
-        set -o nounset
-    popd
-    echo "Finished setting up the 4.4 branch"
+    echo "Finished setting up the 6.0 branch"
 }
 
 setup_cr() {
@@ -289,7 +245,7 @@ setup_jira_auth() {
             git checkout c837b044ca562c45fbd119a07cf477650545731e
         popd
         mkdir iteng-jira-oauth/venv
-        /opt/mongodbtoolchain/v3/bin/python3 -m venv iteng-jira-oauth/venv
+        /opt/mongodbtoolchain/v4/bin/python3 -m venv iteng-jira-oauth/venv
 
         # Get credentials and store them in the system keyring
         set +o nounset
@@ -312,7 +268,7 @@ setup_gdb() {
         if [[ -d 'Boost-Pretty-Printer' ]]; then
             echo "'Boost-Pretty-Printer' dir exists; skipping setup"
         else
-            git clone git@github.com:ruediger/Boost-Pretty-Printer.git
+            git clone https://github.com/mongodb-forks/Boost-Pretty-Printer
         fi
 
         # the original version of this script just appended this line, so we
@@ -331,7 +287,7 @@ setup_pipx() {
     else
         export PATH="$PATH:$HOME/.local/bin"
         local venv_name="tmp-pipx-venv"
-        /opt/mongodbtoolchain/v3/bin/python3 -m venv $venv_name
+        /opt/mongodbtoolchain/v4/bin/python3 -m venv $venv_name
 
         # virtualenv doesn't like nounset
         set +o nounset
@@ -341,7 +297,7 @@ setup_pipx() {
             python -m pip install --upgrade "pip<20.3"
             python -m pip install pipx
 
-            pipx install pipx --python /opt/mongodbtoolchain/v3/bin/python3 --force
+            pipx install pipx --python /opt/mongodbtoolchain/v4/bin/python3 --force
 
         set +o nounset
         deactivate
@@ -393,7 +349,7 @@ pushd "$workdir"
 
     setup_bash
     setup_master
-    setup_50
+    setup_60
     setup_cr
     setup_jira_auth
     setup_gdb
