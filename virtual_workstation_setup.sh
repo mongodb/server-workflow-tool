@@ -268,7 +268,7 @@ setup_gdb() {
         if [[ -d 'Boost-Pretty-Printer' ]]; then
             echo "'Boost-Pretty-Printer' dir exists; skipping setup"
         else
-            git clone https://github.com/mongodb-forks/Boost-Pretty-Printer
+            git clone git@github.com:mongodb-forks/Boost-Pretty-Printer.git
         fi
 
         # the original version of this script just appended this line, so we
