@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # global variables
-PYTHON=/opt/mongodbtoolchain/v3/bin/python3
+PYTHON=/opt/mongodbtoolchain/v4/bin/python3
 GLOBAL_PYTHON=python3
 
 # === START: function definitions
