@@ -229,7 +229,7 @@ setup_jira_auth() {
     fi
 
     # Get the user's JIRA username
-    read -p "JIRA username (from https://jira.mongodb.org/secure/ViewProfile.jspa): " jira_username
+    read -p "JIRA username (from https://jira.mongodb.org/secure/ViewProfile.jspa ): " jira_username
     if ! silent_grep "export JIRA_USERNAME=" ~/.bashrc; then
         idem_file_append ~/.bashrc "CR Tool JIRA Username" "export JIRA_USERNAME=$jira_username"
     fi
