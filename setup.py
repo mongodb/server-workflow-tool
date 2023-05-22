@@ -42,7 +42,7 @@ setuptools.setup(
         'keyring == 19.0.1',
         'invoke == 1.2.0',
         'pyyaml == 5.1',
-        'requests == 2.21.0'
+        'requests == 2.31.0'
     ],
     entry_points={
         'console_scripts': ['workflow = serverworkflowtool.__main__:run'],
