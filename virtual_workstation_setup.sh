@@ -348,10 +348,10 @@ pushd "$workdir"
     ssh-keyscan github.com >> ~/.ssh/known_hosts 2>&1
 
     setup_bash
+    setup_jira_auth
     setup_master
     setup_60
     setup_cr
-    setup_jira_auth
     setup_gdb
 
     setup_pipx
