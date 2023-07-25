@@ -347,7 +347,12 @@ pushd "$workdir"
     sudo chown ubuntu /data/db
     ssh-keyscan github.com >> ~/.ssh/known_hosts 2>&1
 
+    # Do setup_bash first because it affects the environment, so later steps may
+    # depend on having the right PATH or other settings.
     setup_bash
+    # Do setup_jira_auth as early as possible, because it prompts the user to log
+    # in with Jira, which fails if they don't respond within a certain timeout.
+    # Doing this interactive step first means the rest of the script can run unattended.
     setup_jira_auth
     setup_master
     setup_60
