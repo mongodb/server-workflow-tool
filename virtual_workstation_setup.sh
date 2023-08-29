@@ -170,23 +170,23 @@ setup_master() {
     echo "Finished setting up the mongo repo..."
 }
 
-setup_60() {
+setup_70() {
     echo "################################################################################"
-    echo "Setting up the 6.0 branch..."
-    if [[ -d mongo-v60 ]]; then
-        echo "'mongo-v60' dir exists; skipping setup"
+    echo "Setting up the 7.0 branch..."
+    if [[ -d mongo-v70 ]]; then
+        echo "'mongo-v70' dir exists; skipping setup"
         return
     fi
 
     pushd "$workdir/mongo"
-        git worktree add "$workdir/mongo-v60" v6.0
+        git worktree add "$workdir/mongo-v70" v7.0
     popd
 
-    pushd "$workdir/mongo-v60"
+    pushd "$workdir/mongo-v70"
         mkdir -p src/mongo/db/modules
-        git clone git@github.com:10gen/mongo-enterprise-modules.git -b v6.0 src/mongo/db/modules/enterprise
+        git clone git@github.com:10gen/mongo-enterprise-modules.git -b v7.0 src/mongo/db/modules/enterprise
 
-        /opt/mongodbtoolchain/v3/bin/python3 -m venv python3-venv
+        /opt/mongodbtoolchain/v4/bin/python3 -m venv python3-venv
 
         # virtualenv doesn't like nounset
         set +o nounset
@@ -205,7 +205,7 @@ setup_60() {
         deactivate
         set -o nounset
     popd
-    echo "Finished setting up the 6.0 branch"
+    echo "Finished setting up the 7.0 branch"
 }
 
 setup_cr() {
@@ -349,7 +349,7 @@ pushd "$workdir"
 
     setup_bash
     setup_master
-    setup_60
+    setup_70
     setup_cr
     setup_jira_auth
     setup_gdb
