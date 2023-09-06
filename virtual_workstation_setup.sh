@@ -161,7 +161,7 @@ setup_master() {
             export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
             python -m poetry install --no-root --sync
 
-            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_stable_clang.vars compiledb
+            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_stable_clang.vars compiledb -j$(grep -c ^processor /proc/cpuinfo)
 
             buildninjaic
 
@@ -199,7 +199,7 @@ setup_70() {
 
             python -m pip install -r etc/pip/dev-requirements.txt
 
-            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_stable_clang.vars compiledb
+            python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_stable_clang.vars compiledb -j$(grep -c ^processor /proc/cpuinfo)
 
             buildninjaic
 
