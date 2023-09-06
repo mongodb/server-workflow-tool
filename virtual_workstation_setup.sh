@@ -220,47 +220,6 @@ setup_cr() {
     popd
 }
 
-setup_jira_auth() {
-    echo "################################################################################"
-    echo "Setting up Jira Authentication..."
-    if [ -d "$HOME/mongodb-mongo-master/iteng-jira-oauth" ]; then
-        echo "'mongodb-mongo-master/iteng-jira-oauth' dir exists; skipping setup"
-        return
-    fi
-
-    # Get the user's JIRA username
-    read -p "JIRA username (from https://jira.mongodb.org/secure/ViewProfile.jspa): " jira_username
-    if ! silent_grep "export JIRA_USERNAME=" ~/.bashrc; then
-        idem_file_append ~/.bashrc "CR Tool JIRA Username" "export JIRA_USERNAME=$jira_username"
-    fi
-    export JIRA_USERNAME=$jira_username
-    echo "Wrote username \"$JIRA_USERNAME\" to ~/.bashrc"
-
-    # Set up the Jira OAuth Token Generator repo
-    pushd "$HOME/mongodb-mongo-master"
-        git clone git@github.com:10gen/iteng-jira-oauth.git
-        pushd iteng-jira-oauth
-            # Newer versions parse commandline options, which is incompatible with how jira_credentials.py
-            # uses this repo.
-            git checkout c837b044ca562c45fbd119a07cf477650545731e
-        popd
-        mkdir iteng-jira-oauth/venv
-        /opt/mongodbtoolchain/v4/bin/python3 -m venv iteng-jira-oauth/venv
-
-        # Get credentials and store them in the system keyring
-        set +o nounset
-        source iteng-jira-oauth/venv/bin/activate
-        set -o nounset
-            python -m pip install --upgrade pip
-            python -m pip install -r iteng-jira-oauth/requirements.txt
-            python -m pip install keyring psutil
-            dbus-run-session -- python server-workflow-tool/jira_credentials.py set-password "$PWD/iteng-jira-oauth"
-        set +o nounset
-        deactivate
-        set -o nounset
-    popd
-}
-
 setup_gdb() {
     echo "################################################################################"
     echo "Setting up GDB..."
@@ -350,10 +309,6 @@ pushd "$workdir"
     # Do setup_bash first because it affects the environment, so later steps may
     # depend on having the right PATH or other settings.
     setup_bash
-    # Do setup_jira_auth as early as possible, because it prompts the user to log
-    # in with Jira, which fails if they don't respond within a certain timeout.
-    # Doing this interactive step first means the rest of the script can run unattended.
-    setup_jira_auth
     setup_master
     setup_60
     setup_cr
