@@ -143,9 +143,6 @@ setup_master() {
 
     git clone git@github.com:10gen/mongo.git
     pushd "$workdir/mongo"
-        mkdir -p src/mongo/db/modules
-        git clone git@github.com:10gen/mongo-enterprise-modules.git src/mongo/db/modules/enterprise
-
         /opt/mongodbtoolchain/v4/bin/python3 -m venv python3-venv
 
         # virtualenv doesn't like nounset
@@ -186,9 +183,6 @@ setup_70() {
     popd
 
     pushd "$workdir/mongo-v70"
-        mkdir -p src/mongo/db/modules
-        git clone git@github.com:10gen/mongo-enterprise-modules.git -b v7.0 src/mongo/db/modules/enterprise
-
         /opt/mongodbtoolchain/v4/bin/python3 -m venv python3-venv
 
         # virtualenv doesn't like nounset
