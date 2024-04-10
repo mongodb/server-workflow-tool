@@ -170,19 +170,19 @@ setup_master() {
     echo "Finished setting up the mongo repo..."
 }
 
-setup_70() {
+setup_80() {
     echo "################################################################################"
-    echo "Setting up the 7.0 branch..."
-    if [[ -d mongo-v70 ]]; then
-        echo "'mongo-v70' dir exists; skipping setup"
+    echo "Setting up the 8.0 branch..."
+    if [[ -d mongo-v80 ]]; then
+        echo "'mongo-v80' dir exists; skipping setup"
         return
     fi
 
     pushd "$workdir/mongo"
-        git worktree add "$workdir/mongo-v70" v7.0
+        git worktree add "$workdir/mongo-v80" v8.0
     popd
 
-    pushd "$workdir/mongo-v70"
+    pushd "$workdir/mongo-v80"
         /opt/mongodbtoolchain/v4/bin/python3 -m venv python3-venv
 
         # virtualenv doesn't like nounset
@@ -201,7 +201,7 @@ setup_70() {
         deactivate
         set -o nounset
     popd
-    echo "Finished setting up the 7.0 branch"
+    echo "Finished setting up the 8.0 branch"
 }
 
 setup_cr() {
@@ -306,7 +306,7 @@ pushd "$workdir"
     # depend on having the right PATH or other settings.
     setup_bash
     setup_master
-    setup_70
+    setup_80
     setup_cr
     setup_gdb
 
