@@ -189,9 +189,14 @@ setup_80() {
         set +o nounset
         source python3-venv/bin/activate
         set -o nounset
-            python -m pip install --upgrade "pip==21.0.1"
 
-            python -m pip install -r etc/pip/dev-requirements.txt
+            python -m pip install "pip==21.0.1"
+
+            python -m pip install 'poetry==1.5.1'
+            # PYTHON_KEYRING_BACKEND is needed to make poetry install work
+            # See guide https://wiki.corp.mongodb.com/display/KERNEL/Virtual+Workstation
+            export PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+            python -m poetry install --no-root --sync
 
             python buildscripts/scons.py --variables-files=etc/scons/mongodbtoolchain_stable_clang.vars compiledb -j$(grep -c ^processor /proc/cpuinfo)
 
